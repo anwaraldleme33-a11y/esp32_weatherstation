@@ -39,7 +39,7 @@ export default async function handler(req, res) {
           ${Number(humidity)},
           ${Number(pressure)},
           ${Number(windS)},
-          ${Number(windD)}
+          ${(windD)}
         )
       `;
 
