@@ -60,4 +60,17 @@ export default async function handler(req, res) {
       const rows = await sql`
         SELECT *
         FROM weather_data
-        WHER
+        WHERE device_id = ${device}
+        ORDER BY created_at ASC
+      `;
+
+      return res.status(200).json(rows);
+    }
+
+    return res.status(405).json({ error: "Method not allowed" });
+
+  } catch (err) {
+    console.error("API Error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+}
