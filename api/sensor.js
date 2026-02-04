@@ -57,9 +57,7 @@ export default async function handler(req, res) {
       const rows = await sql`
         SELECT *
         FROM weather_data
-        WHERE device_id = ${device}
-        ORDER BY time DESC
-        LIMIT 100
+       
       `;
 
       return res.status(200).json(rows);
