@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -84,4 +85,125 @@
     select {
       background: var(--card);
       color: var(--text);
-      b
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  🌦 Weather Monitoring System
+  <br>
+  <select id="deviceSelect">
+    <option value="max1">Station max1</option>
+    <option value="max2">Station max2</option>
+    <option value="max3">Station max3</option>
+    <option value="max4">Station max4</option>
+  </select>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h3>Temperature</h3>
+    <div class="value" id="temp">--</div>
+    <div class="unit">°C</div>
+  </div>
+
+  <div class="card">
+    <h3>Humidity</h3>
+    <div class="value" id="hum">--</div>
+    <div class="unit">%</div>
+  </div>
+
+  <div class="card">
+    <h3>Pressure</h3>
+    <div class="value" id="pres">--</div>
+    <div class="unit">hPa</div>
+  </div>
+
+  <div class="card">
+    <h3>Wind Speed</h3>
+    <div class="value" id="windS">--</div>
+    <div class="unit">m/s</div>
+  </div>
+
+  <div class="card">
+    <h3>Wind Direction</h3>
+    <div class="value" id="windD">--</div>
+    <div class="unit">Direction</div>
+  </div>
+</div>
+
+<div class="charts">
+  <canvas id="tempChart"></canvas>
+</div>
+
+<footer>
+  ESP32 + BME280 + Neon + Vercel
+</footer>
+
+<script>
+  const API_URL = "/api/sensor";
+  const tempEl = document.getElementById("temp");
+  const humEl  = document.getElementById("hum");
+  const presEl = document.getElementById("pres");
+  const windSEl = document.getElementById("windS");
+  const windDEl = document.getElementById("windD");
+  const deviceSelect = document.getElementById("deviceSelect");
+
+  let chart;
+
+  async function fetchData() {
+    const device = deviceSelect.value;
+    const res = await fetch(`${API_URL}?device=${device}`);
+    const data = await res.json();
+
+    if (!data.length) return;
+
+    const last = data[data.length - 1];
+
+    tempEl.textContent  = last.temperature.toFixed(1);
+    humEl.textContent   = last.humidity.toFixed(1);
+    presEl.textContent  = last.pressure.toFixed(1);
+    windSEl.textContent = last.windS.toFixed(1);
+    windDEl.textContent = last.windD;
+
+    updateChart(data);
+  }
+
+  function updateChart(data) {
+    const labels = data.map(d => new Date(d.created_at).toLocaleTimeString());
+    const temps  = data.map(d => d.temperature);
+
+    if (!chart) {
+      chart = new Chart(document.getElementById("tempChart"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            label: "Temperature °C",
+            data: temps,
+            borderWidth: 2,
+            tension: 0.4
+          }]
+        }
+      });
+    } else {
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = temps;
+      chart.update();
+    }
+  }
+
+  deviceSelect.addEventListener("change", fetchData);
+
+  fetchData();
+  setInterval(fetchData, 5000);
+</script>
+
+</body>
+</html>
