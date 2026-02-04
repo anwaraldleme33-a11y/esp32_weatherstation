@@ -5,8 +5,7 @@ const allowedDevices = ["max1", "max2", "max3", "max4"];
 
 export default async function handler(req, res) {
   try {
-
-    // السماح للـ ESP32 من أي مكان
+    // CORS
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -15,11 +14,13 @@ export default async function handler(req, res) {
       return res.status(200).end();
     }
 
-    /* ===== POST (ESP32 → Neon) ===== */
+    /* =======================
+       POST (ESP32 → Neon)
+       ======================= */
     if (req.method === "POST") {
       const {
         device_id,
-        temperture,
+        temperature,
         humidity,
         pressure,
         windS,
@@ -32,10 +33,10 @@ export default async function handler(req, res) {
 
       await sql`
         INSERT INTO weather_data
-        (device_id, temperture, humidity, pressure, windS, windD)
+        (device_id, temperature, humidity, pressure, windS, windD)
         VALUES (
           ${device_id},
-          ${Number(temperture)},
+          ${Number(temperature)},
           ${Number(humidity)},
           ${Number(pressure)},
           ${Number(windS)},
@@ -46,7 +47,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: "ok" });
     }
 
-    /* ===== GET (Dashboard) ===== */
+    /* =======================
+       GET (Dashboard ← Neon)
+       ======================= */
     if (req.method === "GET") {
       const { device } = req.query;
 
@@ -57,18 +60,4 @@ export default async function handler(req, res) {
       const rows = await sql`
         SELECT *
         FROM weather_data
-        WHERE device_id = ${device}
-        ORDER BY time ASC
-      
-      `;
-
-      return res.status(200).json(rows);
-    }
-
-    return res.status(405).json({ error: "Method not allowed" });
-
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Server error" });
-  }
-}
+        WHER
