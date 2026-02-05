@@ -1,3 +1,4 @@
+
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL);
@@ -5,6 +6,7 @@ const allowedDevices = ["max1", "max2", "max3", "max4"];
 
 export default async function handler(req, res) {
   try {
+
     // ===== CORS =====
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -14,12 +16,8 @@ export default async function handler(req, res) {
       return res.status(200).end();
     }
 
-    /* ================= POST ================= */
+    /* ========= POST ========= */
     if (req.method === "POST") {
-
-      if (!req.body) {
-        return res.status(400).json({ error: "No body" });
-      }
 
       const {
         device_id,
@@ -28,10 +26,10 @@ export default async function handler(req, res) {
         pressure,
         windS,
         windD
-      } = req.body;
+      } = req.body ?? {};
 
       if (!allowedDevices.includes(device_id)) {
-        return res.status(400).json({ error: "Invalid device" });
+        return res.status(400).json({ error: "invalid device" });
       }
 
       await sql`
@@ -47,35 +45,34 @@ export default async function handler(req, res) {
         )
       `;
 
-      return res.status(200).json({ status: "ok" });
+      return res.status(200).json({ status: "saved" });
     }
 
-    /* ================= GET ================= */
+    /* ========= GET ========= */
     if (req.method === "GET") {
+
       const { device } = req.query;
 
       if (!allowedDevices.includes(device)) {
-        return res.status(400).json({ error: "Invalid device" });
+        return res.status(400).json({ error: "invalid device" });
       }
 
       const rows = await sql`
         SELECT *
         FROM weather_data
         WHERE device_id = ${device}
-        ORDER BY time DESC
-        LIMIT 200
+        ORDER BY time ASC
       `;
 
       return res.status(200).json(rows);
     }
 
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "method not allowed" });
 
   } catch (err) {
-    console.error("API Error:", err);
-
+    console.error(err);
     return res.status(500).json({
-      error: "Server error",
+      error: "server error",
       details: err.message
     });
   }
