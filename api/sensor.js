@@ -16,21 +16,22 @@ export default async function handler(req, res) {
 
     /* ================= POST ================= */
     if (req.method === "POST") {
-      const body = req.body ?? {};
 
-      const device_id = body.device_id;
-      const temperture = body.temperture ?? body.temperature; // دعم الاسمين
-      const humidity = body.humidity;
-      const pressure = body.pressure;
-      const windS = body.windS;
-      const windD = body.windD;
+      if (!req.body) {
+        return res.status(400).json({ error: "No body" });
+      }
+
+      const {
+        device_id,
+        temperture,
+        humidity,
+        pressure,
+        windS,
+        windD
+      } = req.body;
 
       if (!allowedDevices.includes(device_id)) {
         return res.status(400).json({ error: "Invalid device" });
-      }
-
-      if (temperture === undefined) {
-        return res.status(400).json({ error: "temperture missing" });
       }
 
       await sql`
@@ -61,7 +62,8 @@ export default async function handler(req, res) {
         SELECT *
         FROM weather_data
         WHERE device_id = ${device}
-        ORDER BY time ASC
+        ORDER BY time DESC
+        LIMIT 200
       `;
 
       return res.status(200).json(rows);
@@ -71,6 +73,7 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("API Error:", err);
+
     return res.status(500).json({
       error: "Server error",
       details: err.message
