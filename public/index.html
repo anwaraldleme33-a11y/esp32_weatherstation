@@ -2,28 +2,23 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Weather Station Dashboard</title>
+<title>Weather Dashboard</title>
 
 <style>
 body {
   font-family: Arial;
-  background: #0f172a;
-  color: white;
-  text-align: center;
+  background:#0f172a;
+  color:white;
+  text-align:center;
 }
 
 .card {
-  background: #1e293b;
-  margin: 15px;
-  padding: 20px;
-  border-radius: 12px;
-  display: inline-block;
-  width: 260px;
-}
-
-.value {
-  font-size: 22px;
-  margin: 6px;
+  background:#1e293b;
+  padding:20px;
+  margin:15px;
+  border-radius:12px;
+  display:inline-block;
+  width:260px;
 }
 </style>
 </head>
@@ -32,56 +27,49 @@ body {
 
 <h1>🌦 Weather Stations</h1>
 
-<div id="cards"></div>
+<select id="dev">
+  <option value="max1">max1</option>
+  <option value="max2">max2</option>
+  <option value="max3">max3</option>
+  <option value="max4">max4</option>
+</select>
+
+<div id="out"></div>
 
 <script>
-const devices = ["max1","max2","max3","max4"];
 
-async function loadDevice(device){
+async function load(){
 
-  const res = await fetch(
-    "https://esp32-weatherstation.vercel.app/api/sensor?device=" + device
+  const dev = document.getElementById("dev").value;
+
+  const r = await fetch(
+    "/api/sensor?device=" + dev
   );
 
-  if(!res.ok) return null;
-
-  const data = await res.json();
-  if(data.length === 0) return null;
-
-  return data[data.length-1];
-}
-
-async function refresh(){
-
-  let html = "";
-
-  for(const d of devices){
-
-    const row = await loadDevice(d);
-
-    if(!row){
-      html += `<div class="card"><h3>${d}</h3>No data</div>`;
-      continue;
-    }
-
-    html += `
-    <div class="card">
-      <h3>${d}</h3>
-      <div class="value">🌡 ${row.temperture.toFixed(1)} °C</div>
-      <div class="value">💧 ${row.humidity.toFixed(1)} %</div>
-      <div class="value">⏲ ${row.pressure.toFixed(1)} hPa</div>
-      <div class="value">💨 ${row.winds.toFixed?.(1) ?? row.winds} m/s</div>
-      <div class="value">🧭 ${row.windd}</div>
-      <div style="font-size:12px">${row.time}</div>
-    </div>`;
+  const data = await r.json();
+  if(data.length === 0){
+    document.getElementById("out").innerHTML = "No data";
+    return;
   }
 
-  document.getElementById("cards").innerHTML = html;
+  const d = data[data.length-1];
+
+  document.getElementById("out").innerHTML = `
+  <div class="card">
+    🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
+    💧 Humidity: ${d.humidity.toFixed(1)} %<br>
+    ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
+    💨 Wind Speed: ${d.winds ?? d.winds === 0 ? d.winds : d.winds} m/s<br>
+    🧭 Direction: ${d.windd}<br>
+    🕒 ${d.time}
+  </div>`;
 }
 
-refresh();
-setInterval(refresh, 5000);
-</script>
+document.getElementById("dev").onchange = load;
 
+load();
+setInterval(load, 5000);
+
+</script>
 </body>
 </html>
