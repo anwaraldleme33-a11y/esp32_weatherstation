@@ -1,208 +1,86 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Weather Monitoring Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<title>Weather Station Dashboard</title>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
 
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --accent: #22c55e;
-      --text: #e5e7eb;
-      --muted: #94a3b8;
-    }
+.card {
+  background: #1e293b;
+  margin: 15px;
+  padding: 20px;
+  border-radius: 12px;
+  display: inline-block;
+  width: 260px;
+}
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-
-    header {
-      padding: 20px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,.3);
-    }
-
-    .card h3 {
-      margin: 0;
-      font-size: 16px;
-      color: var(--muted);
-    }
-
-    .value {
-      font-size: 36px;
-      font-weight: bold;
-      margin-top: 10px;
-      color: var(--accent);
-    }
-
-    .unit {
-      font-size: 16px;
-      color: var(--muted);
-    }
-
-    .charts {
-      max-width: 1200px;
-      margin: 30px auto;
-      padding: 20px;
-      background: var(--card);
-      border-radius: 16px;
-    }
-
-    footer {
-      text-align: center;
-      color: var(--muted);
-      padding: 15px;
-      font-size: 14px;
-    }
-
-    select {
-      background: var(--card);
-      color: var(--text);
-      border: none;
-      padding: 8px;
-      border-radius: 6px;
-      margin-top: 10px;
-    }
-  </style>
+.value {
+  font-size: 22px;
+  margin: 6px;
+}
+</style>
 </head>
 
 <body>
 
-<header>
-  🌦 Weather Monitoring System
-  <br>
-  <select id="deviceSelect">
-    <option value="max1">Station max1</option>
-    <option value="max2">Station max2</option>
-    <option value="max3">Station max3</option>
-    <option value="max4">Station max4</option>
-  </select>
-</header>
+<h1>🌦 Weather Stations</h1>
 
-<div class="container">
-  <div class="card">
-    <h3>Temperature</h3>
-    <div class="value" id="temp">--</div>
-    <div class="unit">°C</div>
-  </div>
-
-  <div class="card">
-    <h3>Humidity</h3>
-    <div class="value" id="hum">--</div>
-    <div class="unit">%</div>
-  </div>
-
-  <div class="card">
-    <h3>Pressure</h3>
-    <div class="value" id="pres">--</div>
-    <div class="unit">hPa</div>
-  </div>
-
-  <div class="card">
-    <h3>Wind Speed</h3>
-    <div class="value" id="windS">--</div>
-    <div class="unit">m/s</div>
-  </div>
-
-  <div class="card">
-    <h3>Wind Direction</h3>
-    <div class="value" id="windD">--</div>
-    <div class="unit">Direction</div>
-  </div>
-</div>
-
-<div class="charts">
-  <canvas id="tempChart"></canvas>
-</div>
-
-<footer>
-  ESP32 + BME280 + Neon + Vercel
-</footer>
+<div id="cards"></div>
 
 <script>
-  const API_URL = "/api/sensor";
-  const tempEl = document.getElementById("temp");
-  const humEl  = document.getElementById("hum");
-  const presEl = document.getElementById("pres");
-  const windSEl = document.getElementById("windS");
-  const windDEl = document.getElementById("windD");
-  const deviceSelect = document.getElementById("deviceSelect");
+const devices = ["max1","max2","max3","max4"];
 
-  let chart;
+async function loadDevice(device){
 
-  async function fetchData() {
-    const device = deviceSelect.value;
-    const res = await fetch(`${API_URL}?device=${device}`);
-    const data = await res.json();
+  const res = await fetch(
+    "https://esp32-weatherstation.vercel.app/api/sensor?device=" + device
+  );
 
-    if (!data.length) return;
+  if(!res.ok) return null;
 
-    const last = data[data.length - 1];
+  const data = await res.json();
+  if(data.length === 0) return null;
 
-    tempEl.textContent  = last.temperature.toFixed(1);
-    humEl.textContent   = last.humidity.toFixed(1);
-    presEl.textContent  = last.pressure.toFixed(1);
-    windSEl.textContent = last.windS.toFixed(1);
-    windDEl.textContent = last.windD;
+  return data[data.length-1];
+}
 
-    updateChart(data);
-  }
+async function refresh(){
 
-  function updateChart(data) {
-    const labels = data.map(d => new Date(d.created_at).toLocaleTimeString());
-    const temps  = data.map(d => d.temperature);
+  let html = "";
 
-    if (!chart) {
-      chart = new Chart(document.getElementById("tempChart"), {
-        type: "line",
-        data: {
-          labels,
-          datasets: [{
-            label: "Temperature °C",
-            data: temps,
-            borderWidth: 2,
-            tension: 0.4
-          }]
-        }
-      });
-    } else {
-      chart.data.labels = labels;
-      chart.data.datasets[0].data = temps;
-      chart.update();
+  for(const d of devices){
+
+    const row = await loadDevice(d);
+
+    if(!row){
+      html += `<div class="card"><h3>${d}</h3>No data</div>`;
+      continue;
     }
+
+    html += `
+    <div class="card">
+      <h3>${d}</h3>
+      <div class="value">🌡 ${row.temperture.toFixed(1)} °C</div>
+      <div class="value">💧 ${row.humidity.toFixed(1)} %</div>
+      <div class="value">⏲ ${row.pressure.toFixed(1)} hPa</div>
+      <div class="value">💨 ${row.winds.toFixed?.(1) ?? row.winds} m/s</div>
+      <div class="value">🧭 ${row.windd}</div>
+      <div style="font-size:12px">${row.time}</div>
+    </div>`;
   }
 
-  deviceSelect.addEventListener("change", fetchData);
+  document.getElementById("cards").innerHTML = html;
+}
 
-  fetchData();
-  setInterval(fetchData, 5000);
+refresh();
+setInterval(refresh, 5000);
 </script>
 
 </body>
