@@ -1,5 +1,5 @@
 {
-  "name": "esp32-dashboard",
+  "name": "esp32-weatherstation",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
