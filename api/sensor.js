@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     if (req.method === "POST") {
       const {
         device_id,
-        temperature,
+        temperture,
         humidity,
         pressure,
         windS,
@@ -33,10 +33,10 @@ export default async function handler(req, res) {
 
       await sql`
         INSERT INTO weather_data
-        (device_id, temperature, humidity, pressure, windS, windD)
+        (device_id, temperture, humidity, pressure, windS, windD)
         VALUES (
           ${device_id},
-          ${Number(temperature)},
+          ${Number(temperture)},
           ${Number(humidity)},
           ${Number(pressure)},
           ${Number(windS)},
