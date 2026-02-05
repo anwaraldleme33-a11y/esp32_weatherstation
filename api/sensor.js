@@ -5,7 +5,6 @@ const allowedDevices = ["max1", "max2", "max3", "max4"];
 
 export default async function handler(req, res) {
   try {
-    // CORS
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -14,29 +13,38 @@ export default async function handler(req, res) {
       return res.status(200).end();
     }
 
-    /* =======================
-       POST (ESP32 → Neon)
-       ======================= */
+    /* ========= POST ========= */
     if (req.method === "POST") {
-      const {
-        device_id,
-        temperture,
-        humidity,
-        pressure,
-        windS,
-        windD
-      } = req.body ?? {};
+
+      const body = req.body ?? {};
+
+      const device_id = body.device_id;
+
+      // دعم الاسمين
+      const temperature =
+        body.temperature ?? body.temperture;
+
+      const humidity = body.humidity;
+      const pressure = body.pressure;
+      const windS = body.windS;
+      const windD = body.windD;
 
       if (!allowedDevices.includes(device_id)) {
         return res.status(400).json({ error: "Invalid device" });
       }
 
+      if (temperature === undefined) {
+        return res.status(400).json({
+          error: "temperature missing"
+        });
+      }
+
       await sql`
         INSERT INTO weather_data
-        (device_id, temperture, humidity, pressure, windS, windD)
+        (device_id, temperature, humidity, pressure, windS, windD)
         VALUES (
           ${device_id},
-          ${Number(temperture)},
+          ${Number(temperature)},
           ${Number(humidity)},
           ${Number(pressure)},
           ${Number(windS)},
@@ -47,9 +55,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ status: "ok" });
     }
 
-    /* =======================
-       GET (Dashboard ← Neon)
-       ======================= */
+    /* ========= GET ========= */
     if (req.method === "GET") {
       const { device } = req.query;
 
@@ -71,6 +77,9 @@ export default async function handler(req, res) {
 
   } catch (err) {
     console.error("API Error:", err);
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({
+      error: "Server error",
+      details: err.message
+    });
   }
 }
