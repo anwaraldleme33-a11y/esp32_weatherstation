@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,6 +20,11 @@ body {
   display:inline-block;
   width:260px;
 }
+
+h2 {
+  margin-top:30px;
+  font-size:20px;
+}
 </style>
 </head>
 
@@ -38,39 +42,56 @@ body {
 <div id="out"></div>
 
 <script>
-
-async function load(){
-
+async function load() {
   const dev = document.getElementById("dev").value;
 
-  const r = await fetch(
-    "/api/sensor?device=" + dev
-  );
-
+  const r = await fetch("/api/sensor?device=" + dev);
   const data = await r.json();
-  if(data.length === 0){
+
+  if (!data.today || !data.yesterday || (data.today.length === 0 && data.yesterday.length === 0)) {
     document.getElementById("out").innerHTML = "No data";
     return;
   }
 
-  const d = data[data.length-1];
+  let html = "";
 
-  document.getElementById("out").innerHTML = `
-  <div class="card">
-    🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
-    💧 Humidity: ${d.humidity.toFixed(1)} %<br>
-    ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
-    💨 Wind Speed: ${d.winds ?? d.winds === 0 ? d.winds : d.winds} m/s<br>
-    🧭 Direction: ${d.windd}<br>
-    🕒 ${d.time}
-  </div>`;
+  // عرض بيانات اليوم
+  if (data.today.length > 0) {
+    const d = data.today[data.today.length - 1]; // آخر قراءة اليوم
+    html += `
+    <h2>📅 Today</h2>
+    <div class="card">
+      🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
+      💧 Humidity: ${d.humidity.toFixed(1)} %<br>
+      ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
+      💨 Wind Speed: ${d.windS ?? 0} m/s<br>
+      🧭 Direction: ${d.windD}<br>
+      🕒 ${new Date(d.time).toLocaleString()}
+    </div>`;
+  }
+
+  // عرض بيانات الأمس
+  if (data.yesterday.length > 0) {
+    const d = data.yesterday[data.yesterday.length - 1]; // آخر قراءة الأمس
+    html += `
+    <h2>📅 Yesterday</h2>
+    <div class="card">
+      🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
+      💧 Humidity: ${d.humidity.toFixed(1)} %<br>
+      ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
+      💨 Wind Speed: ${d.windS ?? 0} m/s<br>
+      🧭 Direction: ${d.windD}<br>
+      🕒 ${new Date(d.reading_date || d.time).toLocaleString()}
+    </div>`;
+  }
+
+  document.getElementById("out").innerHTML = html;
 }
 
 document.getElementById("dev").onchange = load;
 
 load();
 setInterval(load, 5000);
-
 </script>
 </body>
 </html>
