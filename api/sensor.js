@@ -1,30 +1,32 @@
-
-
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL);
 const allowedDevices = ["max1", "max2", "max3", "max4"];
 
+/* ===== أرشفة بيانات الأمس مرة واحدة فقط ===== */
 async function archiveYesterdayData() {
   try {
-    // نقل بيانات الأمس إلى جدول الأرشيف
     await sql`
       INSERT INTO weather_archive
-        (device_id, temperture, humidity, pressure, windS, windD, reading_date)
+      (device_id, temperture, humidity, pressure, windS, windD, reading_date)
       SELECT device_id, temperture, humidity, pressure, windS, windD, DATE(time)
       FROM weather_data
       WHERE DATE(time) = CURRENT_DATE - INTERVAL '1 day'
+      AND NOT EXISTS (
+        SELECT 1 FROM weather_archive wa
+        WHERE wa.device_id = weather_data.device_id
+        AND wa.reading_date = DATE(weather_data.time)
+      )
     `;
-    console.log("تم أرشفة بيانات الأمس.");
   } catch (err) {
-    console.error("خطأ أثناء الأرشفة:", err);
+    console.error("Archive error:", err);
   }
 }
 
 export default async function handler(req, res) {
   try {
 
-    // ===== CORS =====
+    /* ===== CORS ===== */
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -33,7 +35,6 @@ export default async function handler(req, res) {
       return res.status(200).end();
     }
 
-    // أرشفة بيانات الأمس عند أي طلب GET أو POST
     await archiveYesterdayData();
 
     /* ========= POST ========= */
@@ -71,25 +72,39 @@ export default async function handler(req, res) {
     /* ========= GET ========= */
     if (req.method === "GET") {
 
-      const { device } = req.query;
+      const { device, date } = req.query;
 
       if (!allowedDevices.includes(device)) {
         return res.status(400).json({ error: "invalid device" });
       }
 
-      // البيانات الحالية
+      /* ===== طلب أرشيف حسب تاريخ ===== */
+      if (date) {
+        const rows = await sql`
+          SELECT *
+          FROM weather_archive
+          WHERE device_id = ${device}
+          AND reading_date = ${date}
+          ORDER BY reading_date ASC
+        `;
+        return res.status(200).json(rows);
+      }
+
+      /* ===== الوضع الافتراضي ===== */
+
       const todayRows = await sql`
         SELECT *
         FROM weather_data
-        WHERE device_id = ${device} AND DATE(time) = CURRENT_DATE
+        WHERE device_id = ${device}
+        AND DATE(time) = CURRENT_DATE
         ORDER BY time ASC
       `;
 
-      // بيانات الأمس من الأرشيف
       const yesterdayRows = await sql`
         SELECT *
         FROM weather_archive
-        WHERE device_id = ${device} AND reading_date = CURRENT_DATE - INTERVAL '1 day'
+        WHERE device_id = ${device}
+        AND reading_date = CURRENT_DATE - INTERVAL '1 day'
         ORDER BY reading_date ASC
       `;
 
@@ -102,7 +117,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "method not allowed" });
 
   } catch (err) {
-    console.error(err);
     return res.status(500).json({
       error: "server error",
       details: err.message
