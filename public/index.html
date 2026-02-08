@@ -1,260 +1,296 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Weather Dashboard</title>
-
-<style>
-body {
-  font-family: Arial;<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <title>🌤 لوحة تحكم محطة الطقس</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌦 لوحة الطقس الاحترافية</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        :root {
+            --primary: #3b82f6;
+            --secondary: #1e293b;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #64748b;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Tajawal', 'Segoe UI', sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            color: #e2e8f0;
+            background: linear-gradient(135deg, #0c0c2e 0%, #1a1a3e 100%);
+            color: var(--light);
             min-height: 100vh;
             padding: 20px;
+            background-attachment: fixed;
         }
         
         .container {
-            max-width: 1300px;
+            max-width: 1600px;
             margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 30px;
             padding: 20px;
         }
         
-        h1 {
-            font-size: 2.8rem;
-            background: linear-gradient(to right, #38bdf8, #818cf8);
+        /* الهيدر */
+        .header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 15px;
         }
         
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .device-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .device-selector select {
+            background: transparent;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-width: 150px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(16, 185, 129, 0.2);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* التحكم */
         .controls {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
-            align-items: center;
             gap: 20px;
-            background: rgba(30, 41, 59, 0.7);
-            padding: 20px;
-            border-radius: 16px;
             margin-bottom: 30px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            flex-wrap: wrap;
         }
         
-        .select-wrapper, .date-wrapper {
-            position: relative;
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        select, input, button {
-            padding: 14px 18px;
-            border-radius: 12px;
+        .control-btn {
+            background: linear-gradient(135deg, var(--primary), #6366f1);
+            color: white;
             border: none;
-            font-size: 16px;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        select {
-            background: #1e293b;
-            color: white;
-            border: 1px solid #475569;
-            cursor: pointer;
-            appearance: none;
-            padding-right: 45px;
-        }
-        
-        input {
-            background: #1e293b;
-            color: white;
-            border: 1px solid #475569;
-        }
-        
-        button {
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 10px;
+            transition: all 0.3s ease;
             min-width: 180px;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
         }
         
-        button:hover {
+        .control-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 7px 14px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
         
-        #backBtn {
+        .control-btn.secondary {
             background: linear-gradient(135deg, #64748b, #475569);
         }
         
-        #backBtn:hover {
-            box-shadow: 0 7px 14px rgba(100, 116, 139, 0.4);
-        }
-        
-        .select-wrapper i, .date-wrapper i {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            pointer-events: none;
-        }
-        
-        .dashboard {
+        /* الشبكة الرئيسية */
+        .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 25px;
             margin-bottom: 30px;
         }
         
-        .weather-card {
+        /* بطاقة القراءات */
+        .readings-card {
             background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
         }
         
-        .weather-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(59, 130, 246, 0.3);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #334155;
+        .readings-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
         }
         
         .card-title {
             font-size: 1.5rem;
-            font-weight: 600;
+            margin-bottom: 25px;
             color: #38bdf8;
             display: flex;
             align-items: center;
             gap: 10px;
         }
         
-        .card-time {
-            font-size: 0.9rem;
-            color: #94a3b8;
-        }
-        
-        .weather-data {
+        .readings-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
         }
         
-        .data-item {
+        .reading-item {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            padding: 20px;
             display: flex;
             align-items: center;
             gap: 15px;
-            padding: 15px;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        .data-icon {
+        .reading-item:hover {
+            transform: translateY(-5px);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .reading-icon {
             width: 50px;
             height: 50px;
-            border-radius: 50%;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2));
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
-            background: rgba(59, 130, 246, 0.2);
             color: #60a5fa;
         }
         
-        .data-content h3 {
+        .reading-info h3 {
             font-size: 0.9rem;
             color: #94a3b8;
             margin-bottom: 5px;
         }
         
-        .data-value {
+        .reading-value {
             font-size: 1.8rem;
             font-weight: 700;
-            color: #f8fafc;
+            color: white;
         }
         
-        .data-unit {
+        .reading-unit {
             font-size: 1rem;
             color: #94a3b8;
-            margin-right: 3px;
+            margin-right: 5px;
         }
         
         /* البوصلة */
-        .compass-container {
+        .compass-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 15px;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 12px;
-            grid-column: span 2;
         }
         
-        .compass-title {
-            font-size: 1.2rem;
-            margin-bottom: 15px;
-            color: #38bdf8;
-        }
-        
-        .compass {
+        .compass-wrapper {
             position: relative;
-            width: 180px;
-            height: 180px;
-            margin: 0 auto;
+            width: 250px;
+            height: 250px;
+            margin: 20px 0;
         }
         
-        .compass-circle {
+        .compass-outer {
             width: 100%;
             height: 100%;
             border-radius: 50%;
             background: conic-gradient(
-                from 0deg,
-                #ef4444 0deg, #f97316 45deg, #eab308 90deg, 
-                #22c55e 135deg, #0ea5e9 180deg, #3b82f6 225deg, 
+                #ef4444 0deg, #f97316 45deg, #eab308 90deg,
+                #22c55e 135deg, #0ea5e9 180deg, #3b82f6 225deg,
                 #8b5cf6 270deg, #ec4899 315deg, #ef4444 360deg
             );
             position: relative;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .compass-inner {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: var(--dark);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .compass-directions {
@@ -266,34 +302,35 @@ body {
             border-radius: 50%;
         }
         
-        .direction {
+        .compass-direction {
             position: absolute;
             font-weight: bold;
             color: white;
-            text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+            font-size: 1.2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
         
-        .n { top: 5%; left: 50%; transform: translateX(-50%); }
-        .e { top: 50%; right: 5%; transform: translateY(-50%); }
-        .s { bottom: 5%; left: 50%; transform: translateX(-50%); }
-        .w { top: 50%; left: 5%; transform: translateY(-50%); }
+        .direction-n { top: 10px; left: 50%; transform: translateX(-50%); }
+        .direction-e { top: 50%; right: 10px; transform: translateY(-50%); }
+        .direction-s { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        .direction-w { top: 50%; left: 10px; transform: translateY(-50%); }
         
         .compass-needle {
             position: absolute;
             top: 50%;
             left: 50%;
             transform-origin: center bottom;
-            transition: transform 0.5s ease;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
             z-index: 10;
         }
         
         .needle {
             width: 4px;
-            height: 80px;
-            background: #f8fafc;
+            height: 100px;
+            background: linear-gradient(to top, #ef4444, #f8fafc);
             border-radius: 2px;
             position: relative;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
         }
         
         .needle::after {
@@ -306,7 +343,7 @@ body {
             height: 0;
             border-left: 8px solid transparent;
             border-right: 8px solid transparent;
-            border-top: 15px solid #ef4444;
+            border-top: 12px solid #ef4444;
         }
         
         .compass-center {
@@ -316,574 +353,639 @@ body {
             transform: translate(-50%, -50%);
             width: 20px;
             height: 20px;
-            background: #1e293b;
+            background: #f8fafc;
             border-radius: 50%;
             z-index: 11;
-            border: 3px solid #f8fafc;
+            border: 4px solid var(--dark);
         }
         
-        .wind-direction {
-            margin-top: 15px;
-            font-size: 1.2rem;
+        .direction-info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .direction-text {
+            font-size: 1.3rem;
             color: #38bdf8;
             font-weight: 600;
+            margin-bottom: 5px;
         }
         
-        /* جدول الأرشيف */
-        .archive-container {
+        .direction-degree {
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+        
+        /* الرسوم البيانية */
+        .charts-section {
+            grid-column: 1 / -1;
             background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .archive-title {
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            color: #38bdf8;
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .chart-container {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            height: 300px;
+        }
+        
+        /* معلومات النظام */
+        .system-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .info-item {
             display: flex;
             align-items: center;
             gap: 10px;
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        
-        th {
-            background: rgba(59, 130, 246, 0.2);
+        .info-item i {
             color: #38bdf8;
-            padding: 16px 12px;
-            text-align: center;
-            font-weight: 600;
-            border-bottom: 2px solid #334155;
+            font-size: 1.2rem;
         }
         
-        td {
-            padding: 14px 12px;
-            text-align: center;
-            border-bottom: 1px solid #334155;
-        }
-        
-        tr:hover {
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
-        /* حالة عدم وجود بيانات */
+        /* حالات خاصة */
         .no-data {
             text-align: center;
-            padding: 50px 20px;
-            font-size: 1.2rem;
-            color: #94a3b8;
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 20px;
-            margin-top: 20px;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 60px 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(59, 130, 246, 0.3);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         /* التكيف مع الشاشات الصغيرة */
         @media (max-width: 768px) {
-            .dashboard {
+            .dashboard-grid {
                 grid-template-columns: 1fr;
             }
             
-            .weather-data {
+            .readings-grid {
                 grid-template-columns: 1fr;
             }
             
-            .compass-container {
-                grid-column: span 1;
+            .charts-grid {
+                grid-template-columns: 1fr;
             }
             
-            .controls {
+            .header {
                 flex-direction: column;
+                text-align: center;
             }
             
-            .select-wrapper, .date-wrapper {
-                min-width: 100%;
+            .header-info {
+                justify-content: center;
             }
             
-            h1 {
-                font-size: 2.2rem;
+            .compass-wrapper {
+                width: 200px;
+                height: 200px;
+            }
+            
+            .chart-container {
+                height: 250px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1><i class="fas fa-cloud-sun"></i> لوحة الطقس الاحترافية</h1>
-            <p>مراقبة وحدة الطقس والظروف الجوية في الوقت الفعلي</p>
-        </header>
-        
+        <!-- الهيدر -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-cloud-sun"></i>
+                لوحة تحكم محطة الطقس
+            </h1>
+            <div class="header-info">
+                <div class="device-selector">
+                    <i class="fas fa-satellite"></i>
+                    <select id="deviceSelect">
+                        <option value="max1">محطة الطقس 1</option>
+                        <option value="max2">محطة الطقس 2</option>
+                        <option value="max3">محطة الطقس 3</option>
+                        <option value="max4">محطة الطقس 4</option>
+                    </select>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="statusText">جاري التحميل...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- التحكم -->
         <div class="controls">
-            <div class="select-wrapper">
-                <i class="fas fa-satellite-dish"></i>
-                <select id="dev">
-                    <option value="max1">محطة الطقس 1</option>
-                    <option value="max2">محطة الطقس 2</option>
-                    <option value="max3">محطة الطقس 3</option>
-                    <option value="max4">محطة الطقس 4</option>
-                </select>
-            </div>
-            
-            <div class="date-wrapper">
-                <i class="fas fa-calendar-alt"></i>
-                <input type="date" id="archDate">
-            </div>
-            
-            <button onclick="loadArchive()">
-                <i class="fas fa-archive"></i> عرض الأرشيف
+            <button class="control-btn" onclick="loadCurrentData()">
+                <i class="fas fa-sync-alt"></i>
+                تحديث البيانات
             </button>
-            
-            <button onclick="backToCurrent()" id="backBtn" style="display:none">
-                <i class="fas fa-arrow-right"></i> العودة للقراءات الحالية
+            <button class="control-btn secondary" onclick="toggleAutoRefresh()">
+                <i class="fas fa-clock"></i>
+                <span id="autoRefreshText">التحديث التلقائي: مفعل</span>
+            </button>
+            <button class="control-btn" onclick="showArchive()">
+                <i class="fas fa-history"></i>
+                عرض الأرشيف
             </button>
         </div>
-        
-        <div id="out"></div>
+
+        <!-- منطقة العرض -->
+        <div id="contentArea">
+            <!-- سيتم تعبئة المحتوى هنا -->
+        </div>
     </div>
 
     <script>
-        // بيانات تجريبية (لتجربة التطبيق بدون خادم)
-        const mockData = {
-            today: [
-                {
-                    temperture: 24.5,
-                    humidity: 65,
-                    pressure: 1013.2,
-                    winds: 3.2,
-                    windd: "شمالي غربي",
-                    time: new Date().toISOString()
-                }
-            ],
-            yesterday: [
-                {
-                    temperture: 22.8,
-                    humidity: 70,
-                    pressure: 1012.8,
-                    winds: 2.8,
-                    windd: "غربي",
-                    reading_date: new Date(Date.now() - 86400000).toISOString()
-                }
-            ]
+        // متغيرات النظام
+        let currentDevice = 'max1';
+        let autoRefreshEnabled = true;
+        let refreshInterval = null;
+        let charts = {};
+        let recentData = {
+            temperature: [],
+            humidity: [],
+            pressure: [],
+            windSpeed: [],
+            timestamps: []
         };
-        
-        const mockArchive = [
-            { temperture: 23.1, humidity: 68, pressure: 1013.5, winds: 2.5, windd: "شمالي" },
-            { temperture: 24.3, humidity: 64, pressure: 1013.1, winds: 3.1, windd: "شمالي غربي" },
-            { temperture: 25.7, humidity: 61, pressure: 1012.9, winds: 3.8, windd: "غربي" },
-            { temperture: 26.2, humidity: 59, pressure: 1012.7, winds: 4.2, windd: "جنوبي غربي" },
-            { temperture: 24.9, humidity: 63, pressure: 1013.0, winds: 2.9, windd: "جنوبي" },
-            { temperture: 23.5, humidity: 67, pressure: 1013.3, winds: 2.3, windd: "جنوبي شرقي" }
-        ];
-        
-        // دالة لتحويل اتجاه الرياح إلى درجات للبوصلة
-        function windDirectionToDegrees(direction) {
+
+        // عناصر DOM
+        const contentArea = document.getElementById('contentArea');
+        const deviceSelect = document.getElementById('deviceSelect');
+        const statusText = document.getElementById('statusText');
+        const autoRefreshText = document.getElementById('autoRefreshText');
+
+        // تهيئة النظام
+        function init() {
+            loadCurrentData();
+            startAutoRefresh();
+            setupEventListeners();
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            deviceSelect.addEventListener('change', function() {
+                currentDevice = this.value;
+                loadCurrentData();
+            });
+        }
+
+        // تحميل البيانات الحالية
+        async function loadCurrentData() {
+            try {
+                showLoading();
+                
+                const response = await fetch(`/api/sensor?device=${currentDevice}`);
+                
+                if (!response.ok) {
+                    throw new Error(`خطأ في الخادم: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // تحليل البيانات
+                let todayData = [];
+                if (data.today && Array.isArray(data.today)) {
+                    todayData = data.today;
+                } else if (Array.isArray(data)) {
+                    todayData = data;
+                }
+                
+                if (todayData.length === 0) {
+                    showNoData();
+                    return;
+                }
+                
+                // الحصول على أحدث قراءة
+                const latestReading = todayData[todayData.length - 1];
+                
+                // تحديث حالة النظام
+                updateStatus('متصل', true);
+                
+                // تحديث بيانات الرسم البياني
+                updateChartData(latestReading);
+                
+                // عرض البيانات
+                displayCurrentData(latestReading);
+                
+                // إنشاء/تحديث الرسوم البيانية
+                if (recentData.temperature.length > 1) {
+                    createCharts();
+                }
+                
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                updateStatus('غير متصل', false);
+                showError(error.message);
+            }
+        }
+
+        // عرض البيانات الحالية
+        function displayCurrentData(data) {
+            const temperature = data.temperture || 0;
+            const humidity = data.humidity || 0;
+            const pressure = data.pressure || 0;
+            const windSpeed = data.winds || data.windS || 0;
+            const windDirection = data.windd || data.windD || 'غير معروف';
+            const readingTime = data.time ? new Date(data.time).toLocaleString('ar-SA') : 'الآن';
+            
+            const content = `
+                <div class="dashboard-grid">
+                    <!-- بطاقة القراءات -->
+                    <div class="readings-card">
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            القراءات الحالية
+                        </h2>
+                        <div class="readings-grid">
+                            <div class="reading-item">
+                                <div class="reading-icon">
+                                    <i class="fas fa-thermometer-half"></i>
+                                </div>
+                                <div class="reading-info">
+                                    <h3>درجة الحرارة</h3>
+                                    <div class="reading-value">
+                                        ${temperature.toFixed(1)}<span class="reading-unit">°C</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reading-item">
+                                <div class="reading-icon">
+                                    <i class="fas fa-tint"></i>
+                                </div>
+                                <div class="reading-info">
+                                    <h3>الرطوبة</h3>
+                                    <div class="reading-value">
+                                        ${humidity.toFixed(1)}<span class="reading-unit">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reading-item">
+                                <div class="reading-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <div class="reading-info">
+                                    <h3>الضغط الجوي</h3>
+                                    <div class="reading-value">
+                                        ${pressure.toFixed(1)}<span class="reading-unit">hPa</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="reading-item">
+                                <div class="reading-icon">
+                                    <i class="fas fa-wind"></i>
+                                </div>
+                                <div class="reading-info">
+                                    <h3>سرعة الرياح</h3>
+                                    <div class="reading-value">
+                                        ${windSpeed.toFixed(1)}<span class="reading-unit">m/s</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="system-info">
+                            <div class="info-item">
+                                <i class="far fa-clock"></i>
+                                <span>آخر تحديث: ${readingTime}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-satellite"></i>
+                                <span>المحطة: ${currentDevice}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- البوصلة -->
+                    <div class="compass-card">
+                        <h2 class="card-title">
+                            <i class="fas fa-compass"></i>
+                            اتجاه الرياح
+                        </h2>
+                        <div class="compass-wrapper">
+                            <div class="compass-outer">
+                                <div class="compass-inner">
+                                    <div class="compass-directions">
+                                        <div class="compass-direction direction-n">N</div>
+                                        <div class="compass-direction direction-e">E</div>
+                                        <div class="compass-direction direction-s">S</div>
+                                        <div class="compass-direction direction-w">W</div>
+                                    </div>
+                                    <div class="compass-needle" id="compassNeedle">
+                                        <div class="needle"></div>
+                                    </div>
+                                    <div class="compass-center"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="direction-info">
+                            <div class="direction-text">${windDirection}</div>
+                            <div class="direction-degree">${getWindDirectionDegree(windDirection)}°</div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${recentData.temperature.length > 1 ? `
+                <div class="charts-section">
+                    <h2 class="card-title">
+                        <i class="fas fa-chart-area"></i>
+                        الرسوم البيانية
+                    </h2>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <canvas id="temperatureChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="humidityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            contentArea.innerHTML = content;
+            
+            // تحديث البوصلة
+            updateCompass(windDirection);
+        }
+
+        // تحويل اتجاه الرياح إلى درجات
+        function getWindDirectionDegree(direction) {
             const directions = {
-                "شمالي": 0,
-                "شمالي شرقي": 45,
-                "شرقي": 90,
-                "جنوبي شرقي": 135,
-                "جنوبي": 180,
-                "جنوبي غربي": 225,
-                "غربي": 270,
-                "شمالي غربي": 315
+                'شمالي': 0,
+                'شمالي شرقي': 45,
+                'شرقي': 90,
+                'جنوبي شرقي': 135,
+                'جنوبي': 180,
+                'جنوبي غربي': 225,
+                'غربي': 270,
+                'شمالي غربي': 315,
+                'شمال': 0,
+                'شرق': 90,
+                'جنوب': 180,
+                'غرب': 270
             };
             
             return directions[direction] || 0;
         }
-        
-        // دالة لإنشاء بوصلة تفاعلية
-        function createCompass(windDirection) {
-            const degrees = windDirectionToDegrees(windDirection);
-            
-            return `
-                <div class="compass-container">
-                    <div class="compass-title">اتجاه الرياح</div>
-                    <div class="compass">
-                        <div class="compass-circle"></div>
-                        <div class="compass-directions">
-                            <div class="direction n">N</div>
-                            <div class="direction e">E</div>
-                            <div class="direction s">S</div>
-                            <div class="direction w">W</div>
-                        </div>
-                        <div class="compass-needle" style="transform: translate(-50%, -100%) rotate(${degrees}deg);">
-                            <div class="needle"></div>
-                        </div>
-                        <div class="compass-center"></div>
-                    </div>
-                    <div class="wind-direction">${windDirection}</div>
-                </div>
-            `;
-        }
-        
-        // دالة لعرض بيانات الطقس الحالية
-        async function loadCurrent() {
-            document.getElementById("backBtn").style.display = "none";
-            document.getElementById("archDate").value = "";
-            
-            const dev = devSel();
-            
-            // محاكاة طلب API
-            const data = mockData; // استبدل هذا بـ fetch حقيقي
-            
-            if (!data.today && !data.yesterday) {
-                document.getElementById("out").innerHTML = `<div class="no-data"><i class="fas fa-exclamation-triangle"></i><br>لا توجد بيانات متاحة</div>`;
-                return;
-            }
-            
-            let html = '<div class="dashboard">';
-            
-            if (data.today.length > 0) {
-                const d = data.today[data.today.length - 1];
-                html += createWeatherCard("اليوم", d, new Date(d.time).toLocaleString("ar-SA"));
-            }
-            
-            if (data.yesterday.length > 0) {
-                const d = data.yesterday[data.yesterday.length - 1];
-                html += createWeatherCard("أمس", d, new Date(d.reading_date).toLocaleString("ar-SA"));
-            }
-            
-            html += '</div>';
-            document.getElementById("out").innerHTML = html;
-            
-            // تحديث البوصلة إذا كانت هناك بيانات اليوم
-            if (data.today.length > 0) {
-                updateCompass(data.today[data.today.length - 1].windd);
-            }
-        }
-        
-        // دالة لإنشاء بطاقة الطقس
-        function createWeatherCard(title, data, time) {
-            return `
-                <div class="weather-card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fas fa-${title === "اليوم" ? 'sun' : 'moon'}"></i>
-                            ${title}
-                        </div>
-                        <div class="card-time">
-                            <i class="far fa-clock"></i> ${time}
-                        </div>
-                    </div>
-                    
-                    <div class="weather-data">
-                        <div class="data-item">
-                            <div class="data-icon">
-                                <i class="fas fa-thermometer-half"></i>
-                            </div>
-                            <div class="data-content">
-                                <h3>درجة الحرارة</h3>
-                                <div class="data-value">${Number(data.temperture).toFixed(1)}<span class="data-unit">°C</span></div>
-                            </div>
-                        </div>
-                        
-                        <div class="data-item">
-                            <div class="data-icon">
-                                <i class="fas fa-tint"></i>
-                            </div>
-                            <div class="data-content">
-                                <h3>الرطوبة</h3>
-                                <div class="data-value">${Number(data.humidity).toFixed(1)}<span class="data-unit">%</span></div>
-                            </div>
-                        </div>
-                        
-                        <div class="data-item">
-                            <div class="data-icon">
-                                <i class="fas fa-tachometer-alt"></i>
-                            </div>
-                            <div class="data-content">
-                                <h3>الضغط الجوي</h3>
-                                <div class="data-value">${Number(data.pressure).toFixed(1)}<span class="data-unit">hPa</span></div>
-                            </div>
-                        </div>
-                        
-                        <div class="data-item">
-                            <div class="data-icon">
-                                <i class="fas fa-wind"></i>
-                            </div>
-                            <div class="data-content">
-                                <h3>سرعة الرياح</h3>
-                                <div class="data-value">${data.winds || 0}<span class="data-unit">m/s</span></div>
-                            </div>
-                        </div>
-                        
-                        ${createCompass(data.windd)}
-                    </div>
-                </div>
-            `;
-        }
-        
-        // دالة لتحديث البوصلة
+
+        // تحديث البوصلة
         function updateCompass(direction) {
-            const needle = document.querySelector('.compass-needle');
+            const degrees = getWindDirectionDegree(direction);
+            const needle = document.getElementById('compassNeedle');
             if (needle) {
-                const degrees = windDirectionToDegrees(direction);
-                needle.style.transform = `translate(-50%, -100%) rotate(${degrees}deg)`;
-                
-                // تحديث نص اتجاه الرياح
-                const windDirElement = document.querySelector('.wind-direction');
-                if (windDirElement) {
-                    windDirElement.textContent = direction;
-                }
+                needle.style.transform = `translate(-50%, -50%) rotate(${degrees}deg)`;
             }
         }
-        
-        // دالة لتحميل الأرشيف
-        async function loadArchive() {
-            const date = document.getElementById("archDate").value;
-            if (!date) {
-                alert("الرجاء اختيار تاريخ أولاً");
-                return;
+
+        // تحديث بيانات الرسوم البيانية
+        function updateChartData(data) {
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            recentData.temperature.push(data.temperture || 0);
+            recentData.humidity.push(data.humidity || 0);
+            recentData.pressure.push(data.pressure || 0);
+            recentData.windSpeed.push(data.winds || data.windS || 0);
+            recentData.timestamps.push(timeStr);
+            
+            // الاحتفاظ بآخر 15 قراءة فقط
+            const maxReadings = 15;
+            if (recentData.temperature.length > maxReadings) {
+                recentData.temperature.shift();
+                recentData.humidity.shift();
+                recentData.pressure.shift();
+                recentData.windSpeed.shift();
+                recentData.timestamps.shift();
+            }
+        }
+
+        // إنشاء الرسوم البيانية
+        function createCharts() {
+            // تدمير الرسوم البيانية السابقة إذا وجدت
+            if (charts.temperature) charts.temperature.destroy();
+            if (charts.humidity) charts.humidity.destroy();
+            
+            // مخطط درجة الحرارة
+            const tempCtx = document.getElementById('temperatureChart')?.getContext('2d');
+            if (tempCtx) {
+                charts.temperature = new Chart(tempCtx, {
+                    type: 'line',
+                    data: {
+                        labels: recentData.timestamps,
+                        datasets: [{
+                            label: 'درجة الحرارة',
+                            data: recentData.temperature,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#ef4444',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#e2e8f0', font: { size: 14 } }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: '#334155' }
+                            },
+                            y: {
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: '#334155' },
+                                title: {
+                                    display: true,
+                                    text: 'درجة الحرارة (°C)',
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    }
+                });
             }
             
-            const dev = devSel();
-            
-            // محاكاة طلب API للأرشيف
-            const rows = mockArchive; // استبدل هذا بـ fetch حقيقي
-            
-            if (!rows || rows.length === 0) {
-                document.getElementById("out").innerHTML = `<div class="no-data"><i class="fas fa-archive"></i><br>لا توجد بيانات في الأرشيف لهذا التاريخ</div>`;
-                return;
+            // مخطط الرطوبة
+            const humidityCtx = document.getElementById('humidityChart')?.getContext('2d');
+            if (humidityCtx) {
+                charts.humidity = new Chart(humidityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: recentData.timestamps,
+                        datasets: [{
+                            label: 'الرطوبة',
+                            data: recentData.humidity,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#3b82f6',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#e2e8f0', font: { size: 14 } }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: '#334155' }
+                            },
+                            y: {
+                                ticks: { color: '#94a3b8' },
+                                grid: { color: '#334155' },
+                                title: {
+                                    display: true,
+                                    text: 'الرطوبة (%)',
+                                    color: '#94a3b8'
+                                }
+                            }
+                        }
+                    }
+                });
             }
-            
-            document.getElementById("backBtn").style.display = "flex";
-            
-            let html = `
-                <div class="archive-container">
-                    <h2 class="archive-title">
-                        <i class="fas fa-history"></i> الأرشيف - ${date}
-                    </h2>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th><i class="fas fa-thermometer-half"></i> الحرارة</th>
-                                    <th><i class="fas fa-tint"></i> الرطوبة</th>
-                                    <th><i class="fas fa-tachometer-alt"></i> الضغط</th>
-                                    <th><i class="fas fa-wind"></i> سرعة الرياح</th>
-                                    <th><i class="fas fa-compass"></i> الاتجاه</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-            
-            rows.forEach((r, i) => {
-                html += `
-                    <tr>
-                        <td>${i+1}</td>
-                        <td>${Number(r.temperture).toFixed(1)} °C</td>
-                        <td>${Number(r.humidity).toFixed(1)} %</td>
-                        <td>${Number(r.pressure).toFixed(1)} hPa</td>
-                        <td>${r.winds || 0} m/s</td>
-                        <td>${r.windd}</td>
-                    </tr>`;
-            });
-            
-            html += `</tbody></table></div></div>`;
-            document.getElementById("out").innerHTML = html;
         }
-        
-        // دالة للعودة إلى البيانات الحالية
-        function backToCurrent() {
-            loadCurrent();
-        }
-        
-        // دالة للحصول على الجهاز المحدد
-        function devSel() {
-            return document.getElementById("dev").value;
-        }
-        
-        // تعيين الأحداث
-        document.getElementById("dev").onchange = loadCurrent;
-        
-        // تحميل البيانات الأولية
-        loadCurrent();
-        
-        // تحديث تلقائي كل 30 ثانية (فقط عند عرض البيانات الحالية)
-        setInterval(() => {
-            if (document.getElementById("backBtn").style.display === "none") {
-                loadCurrent();
+
+        // التبديل بين تفعيل وإيقاف التحديث التلقائي
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            
+            if (autoRefreshEnabled) {
+                startAutoRefresh();
+                autoRefreshText.textContent = 'التحديث التلقائي: مفعل';
+            } else {
+                stopAutoRefresh();
+                autoRefreshText.textContent = 'التحديث التلقائي: معطل';
             }
-        }, 30000);
+        }
+
+        // بدء التحديث التلقائي
+        function startAutoRefresh() {
+            stopAutoRefresh();
+            refreshInterval = setInterval(loadCurrentData, 5000); // كل 5 ثواني
+        }
+
+        // إيقاف التحديث التلقائي
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // تحديث حالة النظام
+        function updateStatus(message, isConnected) {
+            statusText.textContent = message;
+            const statusDot = document.querySelector('.status-dot');
+            if (statusDot) {
+                statusDot.style.background = isConnected ? '#10b981' : '#ef4444';
+            }
+        }
+
+        // عرض شاشة التحميل
+        function showLoading() {
+            contentArea.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>جاري تحميل البيانات...</div>
+                </div>
+            `;
+        }
+
+        // عرض رسالة عدم وجود بيانات
+        function showNoData() {
+            contentArea.innerHTML = `
+                <div class="no-data">
+                    <i class="fas fa-database fa-3x" style="color: #64748b; margin-bottom: 20px;"></i>
+                    <h2 style="color: #94a3b8;">لا توجد بيانات متاحة</h2>
+                    <p style="color: #64748b; margin-top: 10px;">لم يتم العثور على بيانات للمحطة المحددة</p>
+                </div>
+            `;
+        }
+
+        // عرض رسالة خطأ
+        function showError(message) {
+            contentArea.innerHTML = `
+                <div class="no-data">
+                    <i class="fas fa-exclamation-triangle fa-3x" style="color: #ef4444; margin-bottom: 20px;"></i>
+                    <h2 style="color: #ef4444;">حدث خطأ</h2>
+                    <p style="color: #ef4444; margin-top: 10px;">${message}</p>
+                    <button class="control-btn" onclick="loadCurrentData()" style="margin-top: 20px;">
+                        <i class="fas fa-redo"></i>
+                        إعادة المحاولة
+                    </button>
+                </div>
+            `;
+        }
+
+        // عرض الأرشيف (وظيفة أساسية)
+        function showArchive() {
+            const date = prompt('الرجاء إدخال التاريخ (YYYY-MM-DD):');
+            if (date) {
+                window.open(`?device=${currentDevice}&date=${date}`, '_blank');
+            }
+        }
+
+        // بدء التطبيق
+        init();
     </script>
-</body>
-</html>
-  background:#0f172a;
-  color:white;
-  text-align:center;
-}
-
-.card {
-  background:#1e293b;
-  padding:20px;
-  margin:15px;
-  border-radius:12px;
-  display:inline-block;
-  width:260px;
-}
-
-table {
-  margin:20px auto;
-  border-collapse: collapse;
-  width:90%;
-  background:#1e293b;
-}
-
-th, td {
-  border:1px solid #334155;
-  padding:8px;
-}
-
-th {
-  background:#334155;
-}
-
-button {
-  padding:10px 18px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-  font-size:14px;
-}
-</style>
-</head>
-
-<body>
-
-<h1>🌦 Weather Stations</h1>
-
-<select id="dev">
-  <option value="max1">max1</option>
-  <option value="max2">max2</option>
-  <option value="max3">max3</option>
-  <option value="max4">max4</option>
-</select>
-
-<br><br>
-
-📅 اختر تاريخ الأرشيف:
-<input type="date" id="archDate">
-
-<button onclick="loadArchive()">عرض الأرشيف</button>
-<button onclick="backToCurrent()" id="backBtn" style="display:none">
-رجوع للقراءات الحالية
-</button>
-
-<div id="out"></div>
-
-<script>
-
-async function loadCurrent() {
-
-  backBtn.style.display = "none";
-  archDate.value = "";
-
-  const dev = devSel();
-  const r = await fetch("/api/sensor?device=" + dev);
-  const data = await r.json();
-
-  if (!data.today && !data.yesterday) {
-    out.innerHTML = "No data";
-    return;
-  }
-
-  let html = "";
-
-  if (data.today.length > 0) {
-    const d = data.today.at(-1);
-    html += card("Today", d, d.time);
-  }
-
-  if (data.yesterday.length > 0) {
-    const d = data.yesterday.at(-1);
-    html += card("Yesterday", d, d.reading_date);
-  }
-
-  out.innerHTML = html;
-}
-
-function card(title, d, t) {
-  return `
-  <h2>${title}</h2>
-  <div class="card">
-    🌡 ${d.temperture.toFixed(1)} °C<br>
-    💧 ${d.humidity.toFixed(1)} %<br>
-    ⏲ ${d.pressure.toFixed(1)} hPa<br>
-    💨 ${d.winds ?? 0} m/s<br>
-    🧭 ${d.windd}<br>
-    🕒 ${new Date(t).toLocaleString()}
-  </div>`;
-}
-
-async function loadArchive() {
-
-  const date = archDate.value;
-  if (!date) {
-    alert("اختر تاريخ أولاً");
-    return;
-  }
-
-  const dev = devSel();
-
-  const r = await fetch(`/api/sensor?device=${dev}&date=${date}`);
-  const rows = await r.json();
-
-  if (!rows || rows.length === 0) {
-    out.innerHTML = "لا توجد بيانات في الأرشيف لهذا التاريخ";
-    return;
-  }
-
-  backBtn.style.display = "inline-block";
-
-  let html = `<h2>Archive — ${date}</h2>`;
-  html += `<table>
-  <tr>
-    <th>#</th>
-    <th>Temp</th>
-    <th>Humidity</th>
-    <th>Pressure</th>
-    <th>Wind Speed</th>
-    <th>Direction</th>
-  </tr>`;
-
-  rows.forEach((r, i) => {
-    html += `
-    <tr>
-      <td>${i+1}</td>
-      <td>${Number(r.temperture).toFixed(1)}</td>
-      <td>${Number(r.humidity).toFixed(1)}</td>
-      <td>${Number(r.pressure).toFixed(1)}</td>
-      <td>${r.winds ?? 0}</td>
-      <td>${r.windd}</td>
-    </tr>`;
-  });
-
-  html += "</table>";
-
-  out.innerHTML = html;
-}
-
-function backToCurrent() {
-  loadCurrent();
-}
-
-function devSel() {
-  return document.getElementById("dev").value;
-}
-
-dev.onchange = loadCurrent;
-
-loadCurrent();
-setInterval(() => {
-  if (backBtn.style.display === "none") loadCurrent();
-}, 5000);
-
-</script>
-
 </body>
 </html>
