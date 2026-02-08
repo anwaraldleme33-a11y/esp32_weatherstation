@@ -39,40 +39,72 @@ h2 {
   <option value="max4">max4</option>
 </select>
 
+<br><br>
+
+📅 اختر تاريخ من الأرشيف:
+<input type="date" id="archDate">
+
 <div id="out"></div>
 
 <script>
+
 async function load() {
   const dev = document.getElementById("dev").value;
+  const date = document.getElementById("archDate").value;
 
-  const r = await fetch("/api/sensor?device=" + dev);
+  let url = "/api/sensor?device=" + dev;
+  if (date) url += "&date=" + date;
+
+  const r = await fetch(url);
   const data = await r.json();
 
-  if (!data.today || !data.yesterday || (data.today.length === 0 && data.yesterday.length === 0)) {
-    document.getElementById("out").innerHTML = "No data";
+  /* ===== وضع الأرشيف حسب تاريخ ===== */
+  if (date) {
+    if (!data || data.length === 0) {
+      out.innerHTML = "No archive data";
+      return;
+    }
+
+    const d = data[data.length - 1];
+
+    out.innerHTML = `
+      <h2>📅 Archive</h2>
+      <div class="card">
+        🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
+        💧 Humidity: ${d.humidity.toFixed(1)} %<br>
+        ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
+        💨 Wind Speed: ${d.winds ?? d.windS ?? 0} m/s<br>
+        🧭 Direction: ${d.windd ?? d.windD}<br>
+        🕒 ${d.reading_date}
+      </div>`;
+    return;
+  }
+
+  /* ===== الوضع الافتراضي ===== */
+
+  if (!data.today && !data.yesterday) {
+    out.innerHTML = "No data";
     return;
   }
 
   let html = "";
 
-  // عرض بيانات اليوم
   if (data.today.length > 0) {
-    const d = data.today[data.today.length - 1]; // آخر قراءة اليوم
+    const d = data.today[data.today.length - 1];
     html += `
     <h2>📅 Today</h2>
     <div class="card">
       🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
       💧 Humidity: ${d.humidity.toFixed(1)} %<br>
       ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
-      💨 Wind Speed: ${d.winds ?? 0} m/s<br>
-      🧭 Direction: ${d.windd}<br>
+      💨 Wind Speed: ${d.windS ?? 0} m/s<br>
+      🧭 Direction: ${d.windD}<br>
       🕒 ${new Date(d.time).toLocaleString()}
     </div>`;
   }
 
-  // عرض بيانات الأمس
   if (data.yesterday.length > 0) {
-    const d = data.yesterday[data.yesterday.length - 1]; // آخر قراءة الأمس
+    const d = data.yesterday[data.yesterday.length - 1];
     html += `
     <h2>📅 Yesterday</h2>
     <div class="card">
@@ -81,17 +113,19 @@ async function load() {
       ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
       💨 Wind Speed: ${d.windS ?? 0} m/s<br>
       🧭 Direction: ${d.windD}<br>
-      🕒 ${new Date(d.reading_date || d.time).toLocaleString()}
+      🕒 ${d.reading_date}
     </div>`;
   }
 
-  document.getElementById("out").innerHTML = html;
+  out.innerHTML = html;
 }
 
-document.getElementById("dev").onchange = load;
+dev.onchange = load;
+archDate.onchange = load;
 
 load();
 setInterval(load, 5000);
+
 </script>
 </body>
 </html>
