@@ -21,9 +21,28 @@ body {
   width:260px;
 }
 
-h2 {
-  margin-top:30px;
-  font-size:20px;
+table {
+  margin:20px auto;
+  border-collapse: collapse;
+  width:90%;
+  background:#1e293b;
+}
+
+th, td {
+  border:1px solid #334155;
+  padding:8px;
+}
+
+th {
+  background:#334155;
+}
+
+button {
+  padding:10px 18px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  font-size:14px;
 }
 </style>
 </head>
@@ -41,46 +60,26 @@ h2 {
 
 <br><br>
 
-📅 اختر تاريخ من الأرشيف:
+📅 اختر تاريخ الأرشيف:
 <input type="date" id="archDate">
+
+<button onclick="loadArchive()">عرض الأرشيف</button>
+<button onclick="backToCurrent()" id="backBtn" style="display:none">
+رجوع للقراءات الحالية
+</button>
 
 <div id="out"></div>
 
 <script>
 
-async function load() {
-  const dev = document.getElementById("dev").value;
-  const date = document.getElementById("archDate").value;
+async function loadCurrent() {
 
-  let url = "/api/sensor?device=" + dev;
-  if (date) url += "&date=" + date;
+  backBtn.style.display = "none";
+  archDate.value = "";
 
-  const r = await fetch(url);
+  const dev = devSel();
+  const r = await fetch("/api/sensor?device=" + dev);
   const data = await r.json();
-
-  /* ===== وضع الأرشيف حسب تاريخ ===== */
-  if (date) {
-    if (!data || data.length === 0) {
-      out.innerHTML = "No archive data";
-      return;
-    }
-
-    const d = data[data.length - 1];
-
-    out.innerHTML = `
-      <h2>📅 Archive</h2>
-      <div class="card">
-        🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
-        💧 Humidity: ${d.humidity.toFixed(1)} %<br>
-        ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
-        💨 Wind Speed: ${d.winds ?? d.windS ?? 0} m/s<br>
-        🧭 Direction: ${d.windd ?? d.windD}<br>
-        🕒 ${d.reading_date}
-      </div>`;
-    return;
-  }
-
-  /* ===== الوضع الافتراضي ===== */
 
   if (!data.today && !data.yesterday) {
     out.innerHTML = "No data";
@@ -90,42 +89,95 @@ async function load() {
   let html = "";
 
   if (data.today.length > 0) {
-    const d = data.today[data.today.length - 1];
-    html += `
-    <h2>📅 Today</h2>
-    <div class="card">
-      🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
-      💧 Humidity: ${d.humidity.toFixed(1)} %<br>
-      ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
-      💨 Wind Speed: ${d.windS ?? 0} m/s<br>
-      🧭 Direction: ${d.windD}<br>
-      🕒 ${new Date(d.time).toLocaleString()}
-    </div>`;
+    const d = data.today.at(-1);
+    html += card("Today", d, d.time);
   }
 
   if (data.yesterday.length > 0) {
-    const d = data.yesterday[data.yesterday.length - 1];
-    html += `
-    <h2>📅 Yesterday</h2>
-    <div class="card">
-      🌡 Temp: ${d.temperture.toFixed(1)} °C<br>
-      💧 Humidity: ${d.humidity.toFixed(1)} %<br>
-      ⏲ Pressure: ${d.pressure.toFixed(1)} hPa<br>
-      💨 Wind Speed: ${d.windS ?? 0} m/s<br>
-      🧭 Direction: ${d.windD}<br>
-      🕒 ${d.reading_date}
-    </div>`;
+    const d = data.yesterday.at(-1);
+    html += card("Yesterday", d, d.reading_date);
   }
 
   out.innerHTML = html;
 }
 
-dev.onchange = load;
-archDate.onchange = load;
+function card(title, d, t) {
+  return `
+  <h2>${title}</h2>
+  <div class="card">
+    🌡 ${d.temperture.toFixed(1)} °C<br>
+    💧 ${d.humidity.toFixed(1)} %<br>
+    ⏲ ${d.pressure.toFixed(1)} hPa<br>
+    💨 ${d.winds ?? 0} m/s<br>
+    🧭 ${d.windd}<br>
+    🕒 ${new Date(t).toLocaleString()}
+  </div>`;
+}
 
-load();
-setInterval(load, 5000);
+async function loadArchive() {
+
+  const date = archDate.value;
+  if (!date) {
+    alert("اختر تاريخ أولاً");
+    return;
+  }
+
+  const dev = devSel();
+
+  const r = await fetch(`/api/sensor?device=${dev}&date=${date}`);
+  const rows = await r.json();
+
+  if (!rows || rows.length === 0) {
+    out.innerHTML = "لا توجد بيانات في الأرشيف لهذا التاريخ";
+    return;
+  }
+
+  backBtn.style.display = "inline-block";
+
+  let html = `<h2>Archive — ${date}</h2>`;
+  html += `<table>
+  <tr>
+    <th>#</th>
+    <th>Temp</th>
+    <th>Humidity</th>
+    <th>Pressure</th>
+    <th>Wind Speed</th>
+    <th>Direction</th>
+  </tr>`;
+
+  rows.forEach((r, i) => {
+    html += `
+    <tr>
+      <td>${i+1}</td>
+      <td>${Number(r.temperture).toFixed(1)}</td>
+      <td>${Number(r.humidity).toFixed(1)}</td>
+      <td>${Number(r.pressure).toFixed(1)}</td>
+      <td>${r.winds ?? 0}</td>
+      <td>${r.windd}</td>
+    </tr>`;
+  });
+
+  html += "</table>";
+
+  out.innerHTML = html;
+}
+
+function backToCurrent() {
+  loadCurrent();
+}
+
+function devSel() {
+  return document.getElementById("dev").value;
+}
+
+dev.onchange = loadCurrent;
+
+loadCurrent();
+setInterval(() => {
+  if (backBtn.style.display === "none") loadCurrent();
+}, 5000);
 
 </script>
+
 </body>
 </html>
