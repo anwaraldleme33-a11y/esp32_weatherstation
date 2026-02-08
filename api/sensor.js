@@ -49,7 +49,7 @@
         .real-time-badge {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
-            padding: 5px 15px;
+            padding: 8px 20px;
             border-radius: 20px;
             font-size: 0.9rem;
             display: inline-flex;
@@ -500,6 +500,11 @@
             .chart-container {
                 height: 250px;
             }
+            
+            .update-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -610,7 +615,7 @@
                 document.getElementById("backBtn").style.display = "none";
                 document.getElementById("archDate").value = "";
                 
-                currentDevice = devSel();
+                currentDevice = document.getElementById("dev").value;
                 
                 // تحديث حالة التحميل
                 document.getElementById("lastUpdate").innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
@@ -624,7 +629,18 @@
                 
                 const data = await response.json();
                 
-                if (!data.today && !data.yesterday) {
+                // التحقق من هيكل البيانات المستلمة
+                console.log('بيانات المستلمة:', data);
+                
+                // التكيف مع تنسيقات البيانات المختلفة
+                let todayData = [];
+                if (data.today && Array.isArray(data.today)) {
+                    todayData = data.today;
+                } else if (Array.isArray(data)) {
+                    todayData = data; // إذا كانت البيانات تأتي كمصفوفة مباشرة
+                }
+                
+                if (todayData.length === 0) {
                     document.getElementById("out").innerHTML = `
                         <div class="no-data">
                             <i class="fas fa-exclamation-triangle"></i><br>
@@ -638,24 +654,15 @@
                 lastUpdateTime = new Date();
                 document.getElementById("lastUpdate").textContent = `آخر تحديث: ${formatTime(lastUpdateTime)}`;
                 
+                // الحصول على أحدث قراءة
+                const latestReading = todayData[todayData.length - 1];
+                
                 let html = '<div class="dashboard-grid">';
-                
-                // عرض بيانات اليوم (القراءات الحية)
-                if (data.today && data.today.length > 0) {
-                    const latestReading = data.today[data.today.length - 1];
-                    html += createWeatherCard("القراءات الحية", latestReading, true);
-                    
-                    // تخزين القراءة الأخيرة للرسوم البيانية
-                    addToRecentReadings(latestReading);
-                }
-                
-                // عرض بيانات الأمس (آخر قراءة)
-                if (data.yesterday && data.yesterday.length > 0) {
-                    const yesterdayReading = data.yesterday[data.yesterday.length - 1];
-                    html += createWeatherCard("أمس", yesterdayReading, false);
-                }
-                
+                html += createWeatherCard("القراءات الحية", latestReading, true);
                 html += '</div>';
+                
+                // تخزين القراءة الأخيرة للرسوم البيانية
+                addToRecentReadings(latestReading);
                 
                 // إضافة قسم الرسوم البيانية إذا كانت هناك بيانات كافية
                 if (recentReadings.temperature.length > 1) {
@@ -668,9 +675,7 @@
                 document.getElementById("out").innerHTML = html;
                 
                 // تحديث البوصلة
-                if (data.today && data.today.length > 0) {
-                    updateCompass(data.today[data.today.length - 1].windd);
-                }
+                updateCompass(latestReading.windd || latestReading.windD);
                 
                 // إنشاء/تحديث الرسوم البيانية
                 if (recentReadings.temperature.length > 1) {
@@ -694,9 +699,22 @@
         
         // دالة لإنشاء بطاقة الطقس
         function createWeatherCard(title, data, isLive) {
-            const time = isLive ? 
-                (data.time ? new Date(data.time).toLocaleString("ar-SA") : 'الآن') : 
-                (data.reading_date ? new Date(data.reading_date).toLocaleDateString("ar-SA") : 'غير متاح');
+            // الحصول على وقت القراءة
+            let displayTime = 'الآن';
+            if (data.time) {
+                const time = new Date(data.time);
+                displayTime = time.toLocaleString("ar-SA");
+            } else if (data.reading_date) {
+                const time = new Date(data.reading_date);
+                displayTime = time.toLocaleString("ar-SA");
+            }
+            
+            // استخراج البيانات مع قيم افتراضية
+            const temperature = data.temperture || data.temperature || 0;
+            const humidity = data.humidity || 0;
+            const pressure = data.pressure || 0;
+            const windSpeed = data.winds || data.windS || 0;
+            const windDirection = data.windd || data.windD || 'غير متاح';
             
             return `
                 <div class="weather-card">
@@ -707,7 +725,7 @@
                             ${title}
                         </div>
                         <div class="card-time">
-                            <i class="far fa-clock"></i> ${time}
+                            <i class="far fa-clock"></i> ${displayTime}
                         </div>
                     </div>
                     
@@ -718,7 +736,7 @@
                             </div>
                             <div class="data-content">
                                 <h3>درجة الحرارة</h3>
-                                <div class="data-value">${data.temperture ? Number(data.temperture).toFixed(1) : '--'}<span class="data-unit">°C</span></div>
+                                <div class="data-value">${Number(temperature).toFixed(1)}<span class="data-unit">°C</span></div>
                             </div>
                         </div>
                         
@@ -728,7 +746,7 @@
                             </div>
                             <div class="data-content">
                                 <h3>الرطوبة</h3>
-                                <div class="data-value">${data.humidity ? Number(data.humidity).toFixed(1) : '--'}<span class="data-unit">%</span></div>
+                                <div class="data-value">${Number(humidity).toFixed(1)}<span class="data-unit">%</span></div>
                             </div>
                         </div>
                         
@@ -738,7 +756,7 @@
                             </div>
                             <div class="data-content">
                                 <h3>الضغط الجوي</h3>
-                                <div class="data-value">${data.pressure ? Number(data.pressure).toFixed(1) : '--'}<span class="data-unit">hPa</span></div>
+                                <div class="data-value">${Number(pressure).toFixed(1)}<span class="data-unit">hPa</span></div>
                             </div>
                         </div>
                         
@@ -748,11 +766,11 @@
                             </div>
                             <div class="data-content">
                                 <h3>سرعة الرياح</h3>
-                                <div class="data-value">${data.winds || data.windS || 0}<span class="data-unit">m/s</span></div>
+                                <div class="data-value">${Number(windSpeed).toFixed(1)}<span class="data-unit">m/s</span></div>
                             </div>
                         </div>
                         
-                        ${createCompass(data.windd || data.windD)}
+                        ${createCompass(windDirection)}
                     </div>
                 </div>
             `;
@@ -778,10 +796,16 @@
             const now = new Date();
             const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
             
-            recentReadings.temperature.push(Number(data.temperture) || 0);
-            recentReadings.humidity.push(Number(data.humidity) || 0);
-            recentReadings.pressure.push(Number(data.pressure) || 0);
-            recentReadings.windSpeed.push(Number(data.winds || data.windS) || 0);
+            // استخراج البيانات مع قيم افتراضية
+            const temperature = data.temperture || data.temperature || 0;
+            const humidity = data.humidity || 0;
+            const pressure = data.pressure || 0;
+            const windSpeed = data.winds || data.windS || 0;
+            
+            recentReadings.temperature.push(Number(temperature));
+            recentReadings.humidity.push(Number(humidity));
+            recentReadings.pressure.push(Number(pressure));
+            recentReadings.windSpeed.push(Number(windSpeed));
             recentReadings.timestamps.push(timeStr);
             
             // الاحتفاظ فقط بآخر 20 قراءة
@@ -817,8 +841,9 @@
         // دالة لتحديث الرسوم البيانية
         function updateCharts() {
             // مخطط درجة الحرارة
-            const tempCtx = document.getElementById('tempChart')?.getContext('2d');
-            if (tempCtx) {
+            const tempCanvas = document.getElementById('tempChart');
+            if (tempCanvas) {
+                const tempCtx = tempCanvas.getContext('2d');
                 if (temperatureChart) {
                     temperatureChart.destroy();
                 }
@@ -865,8 +890,9 @@
             }
             
             // مخطط الرطوبة
-            const humidityCtx = document.getElementById('humidityChart')?.getContext('2d');
-            if (humidityCtx) {
+            const humidityCanvas = document.getElementById('humidityChart');
+            if (humidityCanvas) {
+                const humidityCtx = humidityCanvas.getContext('2d');
                 if (humidityChart) {
                     humidityChart.destroy();
                 }
@@ -966,7 +992,7 @@
                 return;
             }
             
-            const dev = devSel();
+            const dev = document.getElementById("dev").value;
             
             try {
                 document.getElementById("lastUpdate").innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري تحميل الأرشيف...';
@@ -1014,14 +1040,20 @@
                 
                 rows.forEach((r, i) => {
                     const time = r.time ? new Date(r.time).toLocaleTimeString("ar-SA") : '';
+                    const temperature = r.temperture || r.temperature || 0;
+                    const humidity = r.humidity || 0;
+                    const pressure = r.pressure || 0;
+                    const windSpeed = r.winds || r.windS || 0;
+                    const windDirection = r.windd || r.windD || '--';
+                    
                     html += `
                         <tr>
                             <td>${i+1}</td>
-                            <td>${r.temperture ? Number(r.temperture).toFixed(1) : '--'} °C</td>
-                            <td>${r.humidity ? Number(r.humidity).toFixed(1) : '--'} %</td>
-                            <td>${r.pressure ? Number(r.pressure).toFixed(1) : '--'} hPa</td>
-                            <td>${r.winds || r.windS || 0} m/s</td>
-                            <td>${r.windd || r.windD || '--'}</td>
+                            <td>${Number(temperature).toFixed(1)} °C</td>
+                            <td>${Number(humidity).toFixed(1)} %</td>
+                            <td>${Number(pressure).toFixed(1)} hPa</td>
+                            <td>${Number(windSpeed).toFixed(1)} m/s</td>
+                            <td>${windDirection}</td>
                             <td>${time}</td>
                         </tr>`;
                 });
@@ -1083,18 +1115,13 @@
             }
         }
         
-        // دالة للحصول على الجهاز المحدد
-        function devSel() {
-            return document.getElementById("dev").value;
-        }
-        
         // دالة لتنسيق الوقت
         function formatTime(date) {
             return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
         }
         
         // تعيين الأحداث
-        document.getElementById("dev").onchange = loadCurrent;
+        document.getElementById("dev").addEventListener("change", loadCurrent);
         
         // تحميل البيانات الأولية وبدء التحديث التلقائي
         loadCurrent();
