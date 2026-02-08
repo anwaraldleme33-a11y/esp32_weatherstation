@@ -5,7 +5,13 @@
     <title>🌤 لوحة تحكم محطة الطقس</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- إضافة مكتبة Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- إضافة مكتبة Flatpickr للتقويم -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+    
     <style>
         :root {
             --primary: #3b82f6;
@@ -30,7 +36,6 @@
             color: var(--light);
             min-height: 100vh;
             padding: 20px;
-            background-attachment: fixed;
         }
         
         .container {
@@ -41,8 +46,7 @@
         
         /* الهيدر */
         .header {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(30, 41, 59, 0.9);
             border-radius: 20px;
             padding: 25px 30px;
             margin-bottom: 30px;
@@ -142,7 +146,6 @@
             transition: all 0.3s ease;
             min-width: 180px;
             justify-content: center;
-            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
         }
         
         .control-btn:hover {
@@ -152,6 +155,26 @@
         
         .control-btn.secondary {
             background: linear-gradient(135deg, #64748b, #475569);
+        }
+        
+        .control-btn.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        /* التقويم */
+        .calendar-container {
+            position: relative;
+        }
+        
+        .flatpickr-input {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 200px;
+            cursor: pointer;
         }
         
         /* الشبكة الرئيسية */
@@ -164,8 +187,7 @@
         
         /* بطاقة القراءات */
         .readings-card {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(30, 41, 59, 0.9);
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -210,10 +232,13 @@
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        .reading-item:hover {
-            transform: translateY(-5px);
-            border-color: rgba(59, 130, 246, 0.3);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        .reading-item.updating {
+            animation: update-pulse 1s ease;
+        }
+        
+        @keyframes update-pulse {
+            0% { background: rgba(59, 130, 246, 0.3); }
+            100% { background: rgba(15, 23, 42, 0.6); }
         }
         
         .reading-icon {
@@ -248,8 +273,7 @@
         
         /* البوصلة */
         .compass-card {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(30, 41, 59, 0.9);
             border-radius: 20px;
             padding: 30px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -262,8 +286,8 @@
         
         .compass-wrapper {
             position: relative;
-            width: 250px;
-            height: 250px;
+            width: 280px;
+            height: 280px;
             margin: 20px 0;
         }
         
@@ -282,10 +306,10 @@
         
         .compass-inner {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            bottom: 10px;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
             background: var(--dark);
             border-radius: 50%;
             display: flex;
@@ -306,44 +330,46 @@
             position: absolute;
             font-weight: bold;
             color: white;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
         
-        .direction-n { top: 10px; left: 50%; transform: translateX(-50%); }
-        .direction-e { top: 50%; right: 10px; transform: translateY(-50%); }
-        .direction-s { bottom: 10px; left: 50%; transform: translateX(-50%); }
-        .direction-w { top: 50%; left: 10px; transform: translateY(-50%); }
+        .direction-n { top: 15px; left: 50%; transform: translateX(-50%); }
+        .direction-e { top: 50%; right: 15px; transform: translateY(-50%); }
+        .direction-s { bottom: 15px; left: 50%; transform: translateX(-50%); }
+        .direction-w { top: 50%; left: 15px; transform: translateY(-50%); }
         
         .compass-needle {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform-origin: center bottom;
-            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center center;
+            transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
             z-index: 10;
+            width: 10px;
+            height: 10px;
         }
         
         .needle {
             width: 4px;
-            height: 100px;
-            background: linear-gradient(to top, #ef4444, #f8fafc);
+            height: 120px;
+            background: linear-gradient(to bottom, #f8fafc, #ef4444);
             border-radius: 2px;
-            position: relative;
+            position: absolute;
+            top: -120px;
+            left: 3px;
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
         }
         
         .needle::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 12px solid #ef4444;
+            top: -10px;
+            left: -8px;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
         }
         
         .compass-center {
@@ -351,36 +377,40 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
+            width: 25px;
+            height: 25px;
             background: #f8fafc;
             border-radius: 50%;
             z-index: 11;
             border: 4px solid var(--dark);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
         }
         
         .direction-info {
             margin-top: 20px;
             text-align: center;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 15px 30px;
+            border-radius: 12px;
+            min-width: 200px;
         }
         
         .direction-text {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: #38bdf8;
             font-weight: 600;
             margin-bottom: 5px;
         }
         
         .direction-degree {
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: #94a3b8;
         }
         
         /* الرسوم البيانية */
         .charts-section {
             grid-column: 1 / -1;
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(30, 41, 59, 0.9);
             border-radius: 20px;
             padding: 30px;
             margin-bottom: 30px;
@@ -426,20 +456,89 @@
             font-size: 1.2rem;
         }
         
+        /* الأرشيف */
+        .archive-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .archive-content {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .archive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-archive {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        .archive-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .archive-table th {
+            background: rgba(59, 130, 246, 0.2);
+            color: #38bdf8;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .archive-table td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .archive-table tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
         /* حالات خاصة */
         .no-data {
             text-align: center;
             padding: 60px 20px;
             grid-column: 1 / -1;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
         }
         
-        .loading {
-            display: flex;
-            flex-direction: column;
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            justify-content: center;
             align-items: center;
-            gap: 20px;
-            padding: 60px 20px;
-            grid-column: 1 / -1;
         }
         
         .loading-spinner {
@@ -480,12 +579,22 @@
             }
             
             .compass-wrapper {
-                width: 200px;
-                height: 200px;
+                width: 220px;
+                height: 220px;
             }
             
             .chart-container {
                 height: 250px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .control-btn {
+                width: 100%;
+                max-width: 300px;
             }
         }
     </style>
@@ -525,16 +634,42 @@
                 <i class="fas fa-clock"></i>
                 <span id="autoRefreshText">التحديث التلقائي: مفعل</span>
             </button>
-            <button class="control-btn" onclick="showArchive()">
+            <div class="calendar-container">
+                <input type="text" id="archiveDate" class="flatpickr-input" placeholder="اختر تاريخ الأرشيف">
+            </div>
+            <button class="control-btn success" onclick="loadArchiveData()">
                 <i class="fas fa-history"></i>
                 عرض الأرشيف
             </button>
         </div>
 
-        <!-- منطقة العرض -->
+        <!-- منطقة العرض الرئيسية -->
         <div id="contentArea">
             <!-- سيتم تعبئة المحتوى هنا -->
         </div>
+    </div>
+
+    <!-- نافذة الأرشيف -->
+    <div id="archiveModal" class="archive-modal">
+        <div class="archive-content">
+            <div class="archive-header">
+                <h2 class="card-title">
+                    <i class="fas fa-history"></i>
+                    بيانات الأرشيف
+                </h2>
+                <button class="close-archive" onclick="closeArchive()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="archiveContent">
+                <!-- سيتم تعبئة بيانات الأرشيف هنا -->
+            </div>
+        </div>
+    </div>
+
+    <!-- شاشة التحميل -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
     </div>
 
     <script>
@@ -550,18 +685,39 @@
             windSpeed: [],
             timestamps: []
         };
+        let currentCompassRotation = 0;
 
         // عناصر DOM
         const contentArea = document.getElementById('contentArea');
         const deviceSelect = document.getElementById('deviceSelect');
         const statusText = document.getElementById('statusText');
         const autoRefreshText = document.getElementById('autoRefreshText');
+        const archiveModal = document.getElementById('archiveModal');
+        const archiveContent = document.getElementById('archiveContent');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        let flatpickrInstance = null;
 
         // تهيئة النظام
         function init() {
+            initializeCalendar();
             loadCurrentData();
             startAutoRefresh();
             setupEventListeners();
+        }
+
+        // إعداد التقويم
+        function initializeCalendar() {
+            flatpickrInstance = flatpickr("#archiveDate", {
+                locale: "ar",
+                dateFormat: "Y-m-d",
+                maxDate: "today",
+                defaultDate: new Date(),
+                onChange: function(selectedDates, dateStr) {
+                    if (dateStr) {
+                        console.log("التاريخ المحدد:", dateStr);
+                    }
+                }
+            });
         }
 
         // إعداد مستمعي الأحداث
@@ -572,10 +728,11 @@
             });
         }
 
-        // تحميل البيانات الحالية
+        // تحميل البيانات الحالية (بدون إخفاء الصفحة)
         async function loadCurrentData() {
             try {
-                showLoading();
+                // إظهار تأثير التحميل فقط
+                showLoadingEffect();
                 
                 const response = await fetch(`/api/sensor?device=${currentDevice}`);
                 
@@ -607,8 +764,8 @@
                 // تحديث بيانات الرسم البياني
                 updateChartData(latestReading);
                 
-                // عرض البيانات
-                displayCurrentData(latestReading);
+                // تحديث واجهة المستخدم بدون إخفاء الصفحة
+                updateCurrentData(latestReading);
                 
                 // إنشاء/تحديث الرسوم البيانية
                 if (recentData.temperature.length > 1) {
@@ -619,11 +776,14 @@
                 console.error('خطأ في تحميل البيانات:', error);
                 updateStatus('غير متصل', false);
                 showError(error.message);
+            } finally {
+                // إخفاء تأثير التحميل
+                hideLoadingEffect();
             }
         }
 
-        // عرض البيانات الحالية
-        function displayCurrentData(data) {
+        // تحديث البيانات الحالية (بدون إعادة تحميل الصفحة)
+        function updateCurrentData(data) {
             const temperature = data.temperture || 0;
             const humidity = data.humidity || 0;
             const pressure = data.pressure || 0;
@@ -631,6 +791,130 @@
             const windDirection = data.windd || data.windD || 'غير معروف';
             const readingTime = data.time ? new Date(data.time).toLocaleString('ar-SA') : 'الآن';
             
+            // تحديث قيم القراءات مع تأثير
+            updateReadingValue('temperatureValue', temperature.toFixed(1) + '°C');
+            updateReadingValue('humidityValue', humidity.toFixed(1) + '%');
+            updateReadingValue('pressureValue', pressure.toFixed(1) + 'hPa');
+            updateReadingValue('windSpeedValue', windSpeed.toFixed(1) + 'm/s');
+            
+            // تحديث وقت القراءة
+            const timeElement = document.getElementById('readingTime');
+            if (timeElement) {
+                timeElement.textContent = readingTime;
+            }
+            
+            // تحديث البوصلة
+            updateCompass(windDirection);
+        }
+
+        // تحديث قيمة قراءة مع تأثير
+        function updateReadingValue(elementId, newValue) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                // إضافة تأثير التحديث
+                const parent = element.closest('.reading-item');
+                if (parent) {
+                    parent.classList.add('updating');
+                    setTimeout(() => {
+                        parent.classList.remove('updating');
+                    }, 1000);
+                }
+                
+                // تحديث القيمة
+                element.textContent = newValue;
+            }
+        }
+
+        // تحويل اتجاه الرياح إلى درجات
+        function getWindDirectionDegree(direction) {
+            const directions = {
+                'شمالي': 0,
+                'شمالي شرقي': 45,
+                'شرقي': 90,
+                'جنوبي شرقي': 135,
+                'جنوبي': 180,
+                'جنوبي غربي': 225,
+                'غربي': 270,
+                'شمالي غربي': 315,
+                'شمال': 0,
+                'شرق': 90,
+                'جنوب': 180,
+                'غرب': 270
+            };
+            
+            return directions[direction] || 0;
+        }
+
+        // تحديث البوصلة
+        function updateCompass(direction) {
+            const degrees = getWindDirectionDegree(direction);
+            
+            // تحديث نص الاتجاه
+            const directionElement = document.getElementById('windDirectionText');
+            const degreeElement = document.getElementById('windDirectionDegree');
+            
+            if (directionElement) {
+                directionElement.textContent = direction;
+            }
+            if (degreeElement) {
+                degreeElement.textContent = degrees + '°';
+            }
+            
+            // تحديث دوران البوصلة
+            const needle = document.getElementById('compassNeedle');
+            if (needle) {
+                // حساب أقصر مسار للدوران
+                let rotation = degrees;
+                let diff = rotation - currentCompassRotation;
+                
+                // تصحيح الدوران لأقصر مسار
+                if (diff > 180) diff -= 360;
+                if (diff < -180) diff += 360;
+                
+                rotation = currentCompassRotation + diff;
+                currentCompassRotation = rotation;
+                
+                needle.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+            }
+        }
+
+        // تحديث بيانات الرسوم البيانية
+        function updateChartData(data) {
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+            
+            recentData.temperature.push(data.temperture || 0);
+            recentData.humidity.push(data.humidity || 0);
+            recentData.pressure.push(data.pressure || 0);
+            recentData.windSpeed.push(data.winds || data.windS || 0);
+            recentData.timestamps.push(timeStr);
+            
+            // الاحتفاظ بآخر 15 قراءة فقط
+            const maxReadings = 15;
+            if (recentData.temperature.length > maxReadings) {
+                recentData.temperature.shift();
+                recentData.humidity.shift();
+                recentData.pressure.shift();
+                recentData.windSpeed.shift();
+                recentData.timestamps.shift();
+            }
+            
+            // تحديث الرسوم البيانية إذا كانت موجودة
+            if (charts.temperature) {
+                charts.temperature.data.labels = recentData.timestamps;
+                charts.temperature.data.datasets[0].data = recentData.temperature;
+                charts.temperature.update('none');
+            }
+            
+            if (charts.humidity) {
+                charts.humidity.data.labels = recentData.timestamps;
+                charts.humidity.data.datasets[0].data = recentData.humidity;
+                charts.humidity.update('none');
+            }
+        }
+
+        // إنشاء واجهة البيانات الحالية
+        function createCurrentDataInterface() {
             const content = `
                 <div class="dashboard-grid">
                     <!-- بطاقة القراءات -->
@@ -640,50 +924,50 @@
                             القراءات الحالية
                         </h2>
                         <div class="readings-grid">
-                            <div class="reading-item">
+                            <div class="reading-item" id="tempItem">
                                 <div class="reading-icon">
                                     <i class="fas fa-thermometer-half"></i>
                                 </div>
                                 <div class="reading-info">
                                     <h3>درجة الحرارة</h3>
-                                    <div class="reading-value">
-                                        ${temperature.toFixed(1)}<span class="reading-unit">°C</span>
+                                    <div class="reading-value" id="temperatureValue">
+                                        0.0°C
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="reading-item">
+                            <div class="reading-item" id="humidityItem">
                                 <div class="reading-icon">
                                     <i class="fas fa-tint"></i>
                                 </div>
                                 <div class="reading-info">
                                     <h3>الرطوبة</h3>
-                                    <div class="reading-value">
-                                        ${humidity.toFixed(1)}<span class="reading-unit">%</span>
+                                    <div class="reading-value" id="humidityValue">
+                                        0.0%
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="reading-item">
+                            <div class="reading-item" id="pressureItem">
                                 <div class="reading-icon">
                                     <i class="fas fa-tachometer-alt"></i>
                                 </div>
                                 <div class="reading-info">
                                     <h3>الضغط الجوي</h3>
-                                    <div class="reading-value">
-                                        ${pressure.toFixed(1)}<span class="reading-unit">hPa</span>
+                                    <div class="reading-value" id="pressureValue">
+                                        0.0hPa
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="reading-item">
+                            <div class="reading-item" id="windSpeedItem">
                                 <div class="reading-icon">
                                     <i class="fas fa-wind"></i>
                                 </div>
                                 <div class="reading-info">
                                     <h3>سرعة الرياح</h3>
-                                    <div class="reading-value">
-                                        ${windSpeed.toFixed(1)}<span class="reading-unit">m/s</span>
+                                    <div class="reading-value" id="windSpeedValue">
+                                        0.0m/s
                                     </div>
                                 </div>
                             </div>
@@ -692,7 +976,7 @@
                         <div class="system-info">
                             <div class="info-item">
                                 <i class="far fa-clock"></i>
-                                <span>آخر تحديث: ${readingTime}</span>
+                                <span>آخر تحديث: <span id="readingTime">الآن</span></span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-satellite"></i>
@@ -724,14 +1008,13 @@
                             </div>
                         </div>
                         <div class="direction-info">
-                            <div class="direction-text">${windDirection}</div>
-                            <div class="direction-degree">${getWindDirectionDegree(windDirection)}°</div>
+                            <div class="direction-text" id="windDirectionText">غير معروف</div>
+                            <div class="direction-degree" id="windDirectionDegree">0°</div>
                         </div>
                     </div>
                 </div>
                 
-                ${recentData.temperature.length > 1 ? `
-                <div class="charts-section">
+                <div class="charts-section" id="chartsSection" style="display: none;">
                     <h2 class="card-title">
                         <i class="fas fa-chart-area"></i>
                         الرسوم البيانية
@@ -745,68 +1028,19 @@
                         </div>
                     </div>
                 </div>
-                ` : ''}
             `;
             
             contentArea.innerHTML = content;
-            
-            // تحديث البوصلة
-            updateCompass(windDirection);
-        }
-
-        // تحويل اتجاه الرياح إلى درجات
-        function getWindDirectionDegree(direction) {
-            const directions = {
-                'شمالي': 0,
-                'شمالي شرقي': 45,
-                'شرقي': 90,
-                'جنوبي شرقي': 135,
-                'جنوبي': 180,
-                'جنوبي غربي': 225,
-                'غربي': 270,
-                'شمالي غربي': 315,
-                'شمال': 0,
-                'شرق': 90,
-                'جنوب': 180,
-                'غرب': 270
-            };
-            
-            return directions[direction] || 0;
-        }
-
-        // تحديث البوصلة
-        function updateCompass(direction) {
-            const degrees = getWindDirectionDegree(direction);
-            const needle = document.getElementById('compassNeedle');
-            if (needle) {
-                needle.style.transform = `translate(-50%, -50%) rotate(${degrees}deg)`;
-            }
-        }
-
-        // تحديث بيانات الرسوم البيانية
-        function updateChartData(data) {
-            const now = new Date();
-            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-            
-            recentData.temperature.push(data.temperture || 0);
-            recentData.humidity.push(data.humidity || 0);
-            recentData.pressure.push(data.pressure || 0);
-            recentData.windSpeed.push(data.winds || data.windS || 0);
-            recentData.timestamps.push(timeStr);
-            
-            // الاحتفاظ بآخر 15 قراءة فقط
-            const maxReadings = 15;
-            if (recentData.temperature.length > maxReadings) {
-                recentData.temperature.shift();
-                recentData.humidity.shift();
-                recentData.pressure.shift();
-                recentData.windSpeed.shift();
-                recentData.timestamps.shift();
-            }
         }
 
         // إنشاء الرسوم البيانية
         function createCharts() {
+            // إظهار قسم الرسوم البيانية
+            const chartsSection = document.getElementById('chartsSection');
+            if (chartsSection) {
+                chartsSection.style.display = 'block';
+            }
+            
             // تدمير الرسوم البيانية السابقة إذا وجدت
             if (charts.temperature) charts.temperature.destroy();
             if (charts.humidity) charts.humidity.destroy();
@@ -833,6 +1067,9 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 0 // تعطيل الرسوم المتحركة للتحديث
+                        },
                         plugins: {
                             legend: {
                                 labels: { color: '#e2e8f0', font: { size: 14 } }
@@ -879,6 +1116,9 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: {
+                            duration: 0 // تعطيل الرسوم المتحركة للتحديث
+                        },
                         plugins: {
                             legend: {
                                 labels: { color: '#e2e8f0', font: { size: 14 } }
@@ -902,6 +1142,110 @@
                     }
                 });
             }
+        }
+
+        // تحميل بيانات الأرشيف
+        async function loadArchiveData() {
+            const selectedDate = document.getElementById('archiveDate').value;
+            
+            if (!selectedDate) {
+                alert('الرجاء اختيار تاريخ أولاً');
+                return;
+            }
+            
+            try {
+                showLoading(true);
+                
+                const response = await fetch(`/api/sensor?device=${currentDevice}&date=${selectedDate}`);
+                
+                if (!response.ok) {
+                    throw new Error(`خطأ في جلب الأرشيف: ${response.status}`);
+                }
+                
+                const archiveData = await response.json();
+                
+                if (!archiveData || archiveData.length === 0) {
+                    archiveContent.innerHTML = `
+                        <div class="no-data">
+                            <i class="fas fa-database fa-3x" style="color: #64748b; margin-bottom: 20px;"></i>
+                            <h2 style="color: #94a3b8;">لا توجد بيانات في الأرشيف</h2>
+                            <p style="color: #64748b; margin-top: 10px;">لم يتم العثور على بيانات للتاريخ المحدد</p>
+                        </div>
+                    `;
+                } else {
+                    displayArchiveData(archiveData, selectedDate);
+                }
+                
+                archiveModal.style.display = 'flex';
+                
+            } catch (error) {
+                console.error('خطأ في تحميل الأرشيف:', error);
+                archiveContent.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-exclamation-triangle fa-3x" style="color: #ef4444; margin-bottom: 20px;"></i>
+                        <h2 style="color: #ef4444;">خطأ في تحميل الأرشيف</h2>
+                        <p style="color: #ef4444; margin-top: 10px;">${error.message}</p>
+                    </div>
+                `;
+                archiveModal.style.display = 'flex';
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // عرض بيانات الأرشيف
+        function displayArchiveData(data, date) {
+            let tableHTML = `
+                <h3 style="color: #38bdf8; margin-bottom: 20px;">بيانات الأرشيف لتاريخ: ${date}</h3>
+                <div style="overflow-x: auto;">
+                    <table class="archive-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الوقت</th>
+                                <th>درجة الحرارة</th>
+                                <th>الرطوبة</th>
+                                <th>الضغط الجوي</th>
+                                <th>سرعة الرياح</th>
+                                <th>اتجاه الرياح</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            data.forEach((item, index) => {
+                const time = item.time ? new Date(item.time).toLocaleTimeString('ar-SA') : '--';
+                const temperature = item.temperture || item.temperature || 0;
+                const humidity = item.humidity || 0;
+                const pressure = item.pressure || 0;
+                const windSpeed = item.winds || item.windS || 0;
+                const windDirection = item.windd || item.windD || '--';
+                
+                tableHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${time}</td>
+                        <td>${temperature.toFixed(1)}°C</td>
+                        <td>${humidity.toFixed(1)}%</td>
+                        <td>${pressure.toFixed(1)}hPa</td>
+                        <td>${windSpeed.toFixed(1)}m/s</td>
+                        <td>${windDirection}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            archiveContent.innerHTML = tableHTML;
+        }
+
+        // إغلاق نافذة الأرشيف
+        function closeArchive() {
+            archiveModal.style.display = 'none';
         }
 
         // التبديل بين تفعيل وإيقاف التحديث التلقائي
@@ -940,52 +1284,77 @@
             }
         }
 
-        // عرض شاشة التحميل
-        function showLoading() {
-            contentArea.innerHTML = `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <div>جاري تحميل البيانات...</div>
-                </div>
-            `;
+        // إظهار تأثير التحميل
+        function showLoadingEffect() {
+            // إضافة تأثير رجفة للأزرار
+            const refreshBtn = document.querySelector('.control-btn');
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+                refreshBtn.disabled = true;
+            }
+        }
+
+        // إخفاء تأثير التحميل
+        function hideLoadingEffect() {
+            const refreshBtn = document.querySelector('.control-btn');
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> تحديث البيانات';
+                refreshBtn.disabled = false;
+            }
+        }
+
+        // إظهار/إخفاء شاشة التحميل
+        function showLoading(show) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
         }
 
         // عرض رسالة عدم وجود بيانات
         function showNoData() {
-            contentArea.innerHTML = `
-                <div class="no-data">
-                    <i class="fas fa-database fa-3x" style="color: #64748b; margin-bottom: 20px;"></i>
-                    <h2 style="color: #94a3b8;">لا توجد بيانات متاحة</h2>
-                    <p style="color: #64748b; margin-top: 10px;">لم يتم العثور على بيانات للمحطة المحددة</p>
-                </div>
-            `;
+            if (!document.getElementById('temperatureValue')) {
+                createCurrentDataInterface();
+            }
+            
+            updateStatus('لا توجد بيانات', false);
         }
 
         // عرض رسالة خطأ
         function showError(message) {
-            contentArea.innerHTML = `
-                <div class="no-data">
-                    <i class="fas fa-exclamation-triangle fa-3x" style="color: #ef4444; margin-bottom: 20px;"></i>
-                    <h2 style="color: #ef4444;">حدث خطأ</h2>
-                    <p style="color: #ef4444; margin-top: 10px;">${message}</p>
-                    <button class="control-btn" onclick="loadCurrentData()" style="margin-top: 20px;">
-                        <i class="fas fa-redo"></i>
-                        إعادة المحاولة
-                    </button>
-                </div>
+            if (!document.getElementById('temperatureValue')) {
+                createCurrentDataInterface();
+            }
+            
+            updateStatus('خطأ في الاتصال', false);
+            
+            // إضافة رسالة خطأ مؤقتة
+            const errorMsg = document.createElement('div');
+            errorMsg.style.cssText = `
+                background: rgba(239, 68, 68, 0.2);
+                color: #ef4444;
+                padding: 10px 15px;
+                border-radius: 8px;
+                margin-top: 10px;
+                border: 1px solid rgba(239, 68, 68, 0.3);
             `;
-        }
-
-        // عرض الأرشيف (وظيفة أساسية)
-        function showArchive() {
-            const date = prompt('الرجاء إدخال التاريخ (YYYY-MM-DD):');
-            if (date) {
-                window.open(`?device=${currentDevice}&date=${date}`, '_blank');
+            errorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            const header = document.querySelector('.header');
+            if (header && !document.querySelector('.error-message')) {
+                errorMsg.className = 'error-message';
+                header.appendChild(errorMsg);
+                
+                setTimeout(() => {
+                    if (errorMsg.parentNode) {
+                        errorMsg.parentNode.removeChild(errorMsg);
+                    }
+                }, 5000);
             }
         }
 
         // بدء التطبيق
-        init();
+        document.addEventListener('DOMContentLoaded', function() {
+            createCurrentDataInterface();
+            init();
+        });
     </script>
 </body>
 </html>
