@@ -133,16 +133,17 @@
         }
 
         .organization-sub {
-            font-size: 1.2rem;
+            font-size: 1.8rem;
             color: #94a3b8;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
+            font-weight: 600;
         }
 
         .divider-line {
             width: 60px;
             height: 3px;
             background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-            margin: 12px auto;
+            margin: 10px auto;
             border-radius: 2px;
         }
 
@@ -150,7 +151,14 @@
             font-size: 1.4rem;
             font-weight: 600;
             color: #60a5fa;
+            margin-bottom: 5px;
+        }
+
+        .organization-department {
+            font-size: 1.1rem;
+            color: #94a3b8;
             margin-bottom: 20px;
+            font-weight: 500;
         }
 
         .enter-btn {
@@ -799,7 +807,9 @@
             }
 
             .organization-name { font-size: 1.5rem; }
+            .organization-sub { font-size: 1.4rem; }
             .organization-desc { font-size: 1.2rem; }
+            .organization-department { font-size: 1rem; }
             .logo-container { width: 120px; height: 120px; }
             .enter-btn { padding: 14px 35px; font-size: 1.1rem; }
             .footer-info { gap: 12px; font-size: 0.75rem; }
@@ -825,6 +835,9 @@
             <div class="divider-line"></div>
             <div class="organization-desc">
                 مركز بحوث وتكنولوجيا المعلومات والاتصالات
+            </div>
+            <div class="organization-department">
+                قسم الانتاج والتصنيع الالكتروني
             </div>
             <button class="enter-btn" onclick="goToWeatherPage()">
                 <i class="fas fa-cloud-sun"></i>
