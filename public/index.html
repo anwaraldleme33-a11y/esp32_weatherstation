@@ -95,7 +95,7 @@
         .logo-container {
             width: 160px;
             height: 160px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border-radius: 50%;
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2));
             padding: 15px;
@@ -122,40 +122,40 @@
         }
 
         .organization-name {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #38bdf8, #818cf8);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             line-height: 1.2;
         }
 
         .organization-sub {
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             color: #94a3b8;
             margin-bottom: 5px;
         }
 
         .divider-line {
-            width: 70px;
+            width: 60px;
             height: 3px;
             background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-            margin: 15px auto;
+            margin: 12px auto;
             border-radius: 2px;
         }
 
         .organization-desc {
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 600;
             color: #60a5fa;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .enter-btn {
-            padding: 18px 50px;
-            font-size: 1.3rem;
+            padding: 16px 45px;
+            font-size: 1.2rem;
             font-weight: 700;
             border: none;
             border-radius: 50px;
@@ -164,7 +164,7 @@
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             transition: all 0.4s ease;
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
         }
@@ -175,7 +175,7 @@
         }
 
         .enter-btn i {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             transition: transform 0.3s ease;
         }
 
@@ -185,15 +185,16 @@
 
         .footer-info {
             position: absolute;
-            bottom: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            bottom: 30px;
+            left: 0;
+            right: 0;
             display: flex;
-            gap: 30px;
+            gap: 25px;
             flex-wrap: wrap;
             justify-content: center;
             font-size: 0.85rem;
             color: #64748b;
+            padding: 0 20px;
         }
 
         .footer-info span {
@@ -801,7 +802,7 @@
             .organization-desc { font-size: 1.2rem; }
             .logo-container { width: 120px; height: 120px; }
             .enter-btn { padding: 14px 35px; font-size: 1.1rem; }
-            .footer-info { gap: 15px; font-size: 0.75rem; flex-wrap: wrap; }
+            .footer-info { gap: 12px; font-size: 0.75rem; }
         }
     </style>
 </head>
@@ -830,12 +831,13 @@
                 دخول إلى محطة الطقس
                 <i class="fas fa-arrow-left"></i>
             </button>
-            <div class="footer-info">
-                <span><i class="fas fa-map-marker-alt"></i> بغداد، العراق</span>
-                <span><i class="fas fa-envelope"></i> secres@rdd.edu.iq</span>
-                <span><i class="fas fa-phone"></i> +964 7731149340</span>
-                <span><i class="fas fa-globe"></i> www.src.edu.iq</span>
-            </div>
+        </div>
+
+        <div class="footer-info">
+            <span><i class="fas fa-map-marker-alt"></i> بغداد، العراق</span>
+            <span><i class="fas fa-envelope"></i> secres@rdd.edu.iq</span>
+            <span><i class="fas fa-phone"></i> +964 7731149340</span>
+            <span><i class="fas fa-globe"></i> www.src.edu.iq</span>
         </div>
     </div>
 
@@ -929,7 +931,6 @@
         function goToWeatherPage() {
             document.getElementById('mainPage').style.display = 'none';
             document.getElementById('weatherPage').style.display = 'block';
-            // تهيئة صفحة الطقس إذا لم تكن مهيأة
             if (!window.weatherInitialized) {
                 initWeather();
                 window.weatherInitialized = true;
@@ -942,10 +943,9 @@
         }
 
         // ================================================================
-        // كود الطقس (نفس الكود الأصلي)
+        // كود الطقس
         // ================================================================
         
-        // متغيرات النظام
         let currentDevice = 'max1';
         let autoRefreshEnabled = true;
         let refreshInterval = null;
@@ -959,7 +959,6 @@
         };
         let currentCompassRotation = 0;
 
-        // عناصر DOM
         const contentArea = document.getElementById('contentArea');
         const deviceSelect = document.getElementById('deviceSelect');
         const statusText = document.getElementById('statusText');
@@ -969,7 +968,6 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         let flatpickrInstance = null;
 
-        // تهيئة النظام
         function initWeather() {
             initializeCalendar();
             loadCurrentData();
@@ -977,7 +975,6 @@
             setupEventListeners();
         }
 
-        // إعداد التقويم
         function initializeCalendar() {
             flatpickrInstance = flatpickr("#archiveDate", {
                 locale: "ar",
@@ -992,7 +989,6 @@
             });
         }
 
-        // إعداد مستمعي الأحداث
         function setupEventListeners() {
             deviceSelect.addEventListener('change', function() {
                 currentDevice = this.value;
@@ -1000,7 +996,6 @@
             });
         }
 
-        // تحميل البيانات الحالية
         async function loadCurrentData() {
             try {
                 showLoadingEffect();
